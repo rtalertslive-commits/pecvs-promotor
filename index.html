@@ -1,0 +1,2296 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PECVS$ — Promotor Analytics v1.0.0</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #020617;
+            --panel: #0f172a;
+            --panel2: #1e293b;
+            --gold: #d4af37;
+            --gold-l: #fef08a;
+            --white: #f8fafc;
+            --slate: #94a3b8;
+            --border: rgba(212, 175, 55, 0.2);
+            --green: #10b981;
+            --orange: #f59e0b;
+            --red: #ef4444;
+            --blue: #3b82f6;
+            --teal: #06b6d4;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        html,
+        body {
+            background: var(--bg);
+            color: var(--white);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            padding: 30px 20px;
+        }
+
+        .login-overlay {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            transition: .5s;
+        }
+
+        .login-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 24px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .login-card h1 {
+            font-family: 'Playfair Display', serif;
+            color: var(--gold);
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .login-card p {
+            color: var(--slate);
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .app {
+            width: 100%;
+            max-width: 1500px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* HEADER */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-left h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 30px;
+            margin: 0;
+            background: linear-gradient(90deg, var(--white), var(--gold));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-left p {
+            margin: 4px 0 0;
+            font-size: 12px;
+            color: var(--slate);
+        }
+
+        .header-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        /* BUTTONS */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 18px;
+            border-radius: 6px;
+            border: 1px solid var(--gold);
+            background: rgba(15, 23, 42, .8);
+            color: var(--gold-l);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .25s;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            background: var(--gold);
+            color: var(--bg);
+        }
+
+        .btn.active {
+            background: var(--gold);
+            color: var(--bg);
+        }
+
+        .btn-green {
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        .btn-green:hover {
+            background: var(--green);
+            color: #fff;
+        }
+
+        .btn-red {
+            border-color: var(--red);
+            color: var(--red);
+        }
+
+        .btn-red:hover {
+            background: var(--red);
+            color: #fff;
+        }
+
+        .btn-blue {
+            border-color: var(--blue);
+            color: var(--blue);
+        }
+
+        .btn-blue:hover {
+            background: var(--blue);
+            color: #fff;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 11px;
+        }
+
+        /* TABS NAV */
+        .tab-nav {
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0;
+        }
+
+        .tab-btn {
+            padding: 11px 22px;
+            font-size: 13px;
+            font-weight: 600;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--slate);
+            cursor: pointer;
+            transition: .2s;
+            margin-bottom: -1px;
+        }
+
+        .tab-btn:hover {
+            color: var(--white);
+        }
+
+        .tab-btn.active {
+            color: var(--gold);
+            border-bottom-color: var(--gold);
+        }
+
+        /* PANELS */
+        .tab-panel {
+            display: none;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            position: relative;
+        }
+
+        .card-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--gold);
+            font-weight: 800;
+            margin: 0 0 18px;
+        }
+
+        /* FORM ELEMENTS */
+        label.field-label {
+            display: block;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--slate);
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        input[type=text],
+        input[type=number],
+        select,
+        textarea {
+            background: rgba(2, 6, 23, .6);
+            border: 1px solid rgba(255, 255, 255, .1);
+            color: var(--white);
+            padding: 9px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            transition: .2s;
+            width: 100%;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, .1);
+        }
+
+        select option {
+            background: var(--panel);
+        }
+
+        /* CONFIG PANEL */
+        .config-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .agent-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+            max-height: 260px;
+            overflow-y: auto;
+        }
+
+        .agent-chip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid rgba(255, 255, 255, .08);
+            border-radius: 8px;
+            padding: 9px 14px;
+            font-size: 13px;
+        }
+
+        .agent-chip span {
+            font-weight: 500;
+        }
+
+        .chip-del {
+            background: none;
+            border: none;
+            color: var(--red);
+            cursor: pointer;
+            font-size: 14px;
+            opacity: .6;
+            transition: .2s;
+            padding: 0;
+        }
+
+        .chip-del:hover {
+            opacity: 1;
+        }
+
+        .add-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        /* BITACORA SECTION */
+        .bitacora-header {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 14px;
+            align-items: end;
+            margin-bottom: 20px;
+        }
+
+        .week-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .week-table th {
+            padding: 10px 8px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--gold);
+            background: rgba(0, 0, 0, .2);
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .week-table th:first-child {
+            text-align: left;
+            width: 100px;
+        }
+
+        .week-table td {
+            padding: 8px 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, .04);
+        }
+
+        .week-table tfoot tr {
+            background: rgba(212, 175, 55, .08);
+            border-top: 2px solid var(--gold);
+        }
+
+        .week-table tfoot td {
+            color: var(--gold-l);
+            font-weight: 700;
+            font-size: 13px;
+            padding: 12px 6px;
+            text-align: center;
+        }
+
+        .week-table tfoot td:first-child {
+            text-align: left;
+        }
+
+        .day-label {
+            font-weight: 700;
+            font-size: 12px;
+            color: var(--white);
+            text-align: left !important;
+            padding-left: 10px !important;
+        }
+
+        .num-input {
+            width: 72px;
+            text-align: center;
+            padding: 7px 4px;
+        }
+
+        .prima-input {
+            width: 100px;
+            text-align: right;
+        }
+
+        .total-cell {
+            font-weight: 700;
+            color: var(--teal);
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .save-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        /* HISTORY */
+        .history-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .history-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, .03);
+            font-size: 12px;
+            cursor: pointer;
+            transition: .2s;
+        }
+
+        .history-chip:hover {
+            border-color: var(--gold);
+            background: rgba(212, 175, 55, .08);
+        }
+
+        .history-chip .del-entry {
+            color: var(--red);
+            font-size: 11px;
+            opacity: .5;
+            transition: .2s;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .history-chip .del-entry:hover {
+            opacity: 1;
+        }
+
+        /* LEADERBOARD */
+        .lb-filters {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .lb-filters select {
+            width: auto;
+            min-width: 160px;
+        }
+
+        .lb-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 900px;
+        }
+
+        .lb-table th {
+            padding: 13px 10px;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--gold);
+            background: rgba(0, 0, 0, .2);
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .lb-table thead tr:first-child th:nth-child(2) {
+            text-align: left;
+        }
+
+        .lb-table td {
+            padding: 11px 10px;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(255, 255, 255, .04);
+            text-align: center;
+        }
+
+        .lb-table tbody tr:hover {
+            background: rgba(255, 255, 255, .02);
+        }
+
+        .lb-table tfoot tr {
+            background: rgba(212, 175, 55, .08);
+            border-top: 2px solid var(--gold);
+        }
+
+        .lb-table tfoot td {
+            color: var(--gold-l);
+            font-weight: 700;
+            padding: 13px 10px;
+        }
+
+        .rank-num {
+            font-weight: 800;
+            color: var(--slate);
+            font-size: 12px;
+        }
+
+        .agent-name-cell {
+            font-weight: 600;
+            text-align: left !important;
+        }
+
+        .ratio-cell {
+            font-family: 'Inter', monospace;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .badge-ok {
+            background: rgba(16, 185, 129, .15);
+            color: var(--green);
+            border: 1px solid rgba(16, 185, 129, .3);
+        }
+
+        .badge-warn {
+            background: rgba(245, 158, 11, .15);
+            color: var(--orange);
+            border: 1px solid rgba(245, 158, 11, .3);
+        }
+
+        .badge-bad {
+            background: rgba(239, 68, 68, .15);
+            color: var(--red);
+            border: 1px solid rgba(239, 68, 68, .3);
+        }
+
+        .no-data-row td {
+            color: var(--slate);
+            text-align: center;
+            padding: 30px;
+            font-style: italic;
+        }
+
+        .table-scroll {
+            overflow-x: auto;
+        }
+
+        /* CHARTS */
+        .charts-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .charts-controls select {
+            width: auto;
+            min-width: 180px;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .chart-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .chart-card.full {
+            grid-column: 1/-1;
+        }
+
+        .chart-card h3 {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            color: var(--gold-l);
+            margin: 0 0 16px;
+        }
+
+        .chart-wrap {
+            height: 280px;
+            position: relative;
+        }
+
+        /* FUNNEL INDICATOR */
+        .funnel-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .funnel-pill {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            background: rgba(255, 255, 255, .05);
+            border: 1px solid rgba(255, 255, 255, .1);
+        }
+
+        .funnel-pill.ok {
+            background: rgba(16, 185, 129, .1);
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        .funnel-pill.bad {
+            background: rgba(239, 68, 68, .1);
+            border-color: var(--red);
+            color: var(--red);
+        }
+
+        /* SECTION DIVIDER */
+        .section-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--gold);
+            font-weight: 800;
+            margin: 0 0 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, .9);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-box {
+            background: var(--panel);
+            border: 1px solid var(--gold);
+            border-radius: 12px;
+            padding: 36px;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+        }
+
+        .modal-box h2 {
+            margin: 0 0 20px;
+            font-family: 'Playfair Display', serif;
+            color: var(--gold);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 14px;
+            right: 18px;
+            background: none;
+            border: none;
+            color: var(--white);
+            font-size: 26px;
+            cursor: pointer;
+        }
+
+        /* MISC */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--slate);
+        }
+
+        .empty-state i {
+            font-size: 40px;
+            margin-bottom: 14px;
+            display: block;
+            opacity: .3;
+        }
+
+        .info-box {
+            background: rgba(6, 182, 212, .06);
+            border: 1px solid rgba(6, 182, 212, .2);
+            border-radius: 8px;
+            padding: 14px 18px;
+            font-size: 12px;
+            color: var(--teal);
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .info-box strong {
+            color: #fff;
+        }
+
+        .embudo-rule {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--slate);
+            margin-bottom: 12px;
+        }
+
+        .embudo-rule span {
+            font-weight: 800;
+            color: var(--gold);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px)
+            }
+
+            to {
+                opacity: 1;
+                transform: none
+            }
+        }
+
+        .tab-panel.active {
+            animation: fadeIn .3s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- LOGIN OVERLAY -->
+    <div id="login-overlay" class="login-overlay">
+        <div class="login-card">
+            <div style="font-size: 50px; margin-bottom: 20px;">📋</div>
+            <h1>PECVS$ Promotor Hub</h1>
+            <p>Vista global de productividad. Monitorea múltiples coaches y sus equipos en tiempo real.</p>
+            <button id="login-btn" class="btn btn-blue"
+                style="width:100%; justify-content:center; padding:15px; border-radius:12px;">
+                <i class="fa-brands fa-google"></i> Continuar con Google
+            </button>
+            <div style="margin-top: 25px; font-size: 11px; color: var(--slate); opacity: 0.6;">
+                v1.0.0 — Dashboard de Promotoría
+            </div>
+        </div>
+    </div>
+
+    <div class="app">
+
+        <!-- HEADER -->
+        <div class="header">
+            <div class="header-left">
+                <h1><i class="fa-solid fa-chart-line" style="font-size:22px;margin-right:10px;"></i>PECVS$ Analytics
+                    <small style="font-size:10px; color:var(--slate);">v1.3.6</small>
+                </h1>
+                <p id="coach-display">Coach: —</p>
+                <p id="team-display" style="font-size:10px; color:var(--gold); font-weight:700;">Equipo: Sin Código</p>
+            </div>
+            <div class="header-right">
+                <button class="btn btn-sm" onclick="openConfig()"><i class="fa fa-cog"></i> Configuración</button>
+                <button id="logout-btn" class="btn btn-red btn-sm" onclick="logout()"><i class="fa fa-sign-out"></i>
+                    Salir</button>
+            </div>
+        </div>
+
+        <!-- TAB NAV -->
+        <div class="tab-nav">
+            <button class="tab-btn active" onclick="switchTab('bitacora',this)"><i class="fa fa-book-open"></i>
+                Bitácora</button>
+            <button class="tab-btn" onclick="switchTab('leaderboard',this)"><i class="fa fa-table"></i> Leaderboard /
+                Ratios</button>
+            <button class="tab-btn" onclick="switchTab('kpis',this)"><i class="fa fa-chart-column"></i>
+                KPIs (Barras)</button>
+            <button class="tab-btn" onclick="switchTab('charts',this)"><i class="fa fa-chart-area"></i>
+                Tendencias</button>
+            <button class="tab-btn" onclick="switchTab('reporte',this)"><i class="fa fa-file-lines"></i> Reporte
+                Mensual</button>
+        </div>
+
+        <!-- ═══════════════════════════════ TAB: BITÁCORA ═══════════════════════════════ -->
+        <div id="tab-bitacora" class="tab-panel active">
+            <div class="card">
+                <p class="card-title"><i class="fa fa-pen-to-square"></i> Registro Semanal de Actividad</p>
+                <div class="info-box">
+                    <strong>Embudo PECVS$:</strong> P ≥ E ≥ C ≥ V &nbsp;|&nbsp;
+                    P=Contactos · E=Entrevistas · C=Cotizaciones · V=Cierres · S=Solicitudes · $=Prima Neta
+                </div>
+                <div class="bitacora-header">
+                    <div>
+                        <label class="field-label">Agente</label>
+                        <select id="sel-agent" onchange="autoLoadBitacora()">
+                            <option value="">— Selecciona agente —</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="field-label">Mes</label>
+                        <select id="sel-month" onchange="updateBitacoraCalendar()">
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4" selected>Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="field-label">Año</label>
+                        <input type="number" id="inp-year" value="2026" min="2020" max="2040"
+                            onchange="updateBitacoraCalendar()" style="width:100px;">
+                    </div>
+                    <div>
+                        <label class="field-label">Semana</label>
+                        <select id="sel-semana" onchange="updateWeekTable()"></select>
+                    </div>
+                    <!-- Manual load button removed per user request -->
+                </div>
+                <div id="week-info" style="font-size:11px;color:var(--teal);margin-bottom:10px;"></div>
+
+                <table class="week-table">
+                    <thead>
+                        <tr>
+                            <th>Día</th>
+                            <th>P — Contactos</th>
+                            <th>E — Entrevistas</th>
+                            <th>C — Cotizaciones</th>
+                            <th>V — Cierres</th>
+                            <th>S — Solicitudes</th>
+                            <th>$ — Prima Neta</th>
+                            <th>Semáforo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="week-body"></tbody>
+                    <tfoot>
+                        <tr>
+                            <td class="day-label">TOTAL</td>
+                            <td class="total-cell" id="tt-P">0</td>
+                            <td class="total-cell" id="tt-E">0</td>
+                            <td class="total-cell" id="tt-C">0</td>
+                            <td class="total-cell" id="tt-V">0</td>
+                            <td class="total-cell" id="tt-S">0</td>
+                            <td class="total-cell" id="tt-$">$0</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div class="save-row">
+                    <button class="btn" onclick="clearForm(true)"><i class="fa fa-eraser"></i>Borrar tabla y reiniciar
+                        semana a cero</button>
+                    <span id="save-msg" style="font-size:12px;color:var(--green);display:none;"><i
+                            class="fa fa-check"></i> Guardado</span>
+                    <button class="btn btn-sm"
+                        onclick="document.getElementById('modal-bitacora-log').classList.add('open')"
+                        style="margin-left:auto;"><i class="fa fa-list"></i> Ver log (registros completos)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════ TAB: LEADERBOARD ═══════════════════════════════ -->
+        <div id="tab-leaderboard" class="tab-panel active">
+            <div class="card">
+                <div class="lb-filters">
+                    <div>
+                        <label class="field-label">Filtrar por mes</label>
+                        <select id="lb-mes-filter" onchange="renderLeaderboard()">
+                            <option value="">Todos los meses</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="field-label">Semana</label>
+                        <select id="lb-sem-filter" onchange="renderLeaderboard()">
+                            <option value="">Todas las semanas</option>
+                            <option value="1">Semana 1</option>
+                            <option value="2">Semana 2</option>
+                            <option value="3">Semana 3</option>
+                            <option value="4">Semana 4</option>
+                            <option value="5">Semana 5</option>
+                        </select>
+                    </div>
+                    <div style="margin-top:18px;">
+                        <button class="btn btn-sm"
+                            onclick="lb_mes_filter.value='';lb_sem_filter.value='';renderLeaderboard()"><i
+                                class="fa fa-filter-circle-xmark"></i>Quitar filtros</button>
+                        <button id="btn-tog-red" class="btn btn-sm" onclick="toggleRed()">
+                            <i class="fa fa-eye"></i> Ver Conciliación Real
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Info box removed per user request -->
+
+                <div class="table-scroll">
+                    <table class="lb-table">
+                        <thead id="lb-thead">
+                            <tr>
+                                <th rowspan="2">#</th>
+                                <th rowspan="2">Agente</th>
+                                <th colspan="5" style="border-left:2px solid #475569;border-bottom:1px solid #475569">
+                                    Volumen PECVS$</th>
+                                <th colspan="4" style="border-left:2px solid #475569;border-bottom:1px solid #475569">
+                                    Ratios PECVS</th>
+                                <th colspan="2" style="border-left:2px solid #475569;border-bottom:1px solid #475569">
+                                    Ratios de efectividad</th>
+                                <th colspan="3" style="border-left:2px solid #475569;border-bottom:1px solid #475569">
+                                    Prima promedio ($)</th>
+                                <th colspan="2" style="border-left:2px solid #475569;border-bottom:1px solid #475569">
+                                    Actividad NO Válida (🔴)</th>
+                            </tr>
+                            <tr>
+                                <th style="border-left:2px solid #475569">P</th>
+                                <th>E</th>
+                                <th>C</th>
+                                <th>V</th>
+                                <th>S</th>
+                                <th title="Contactos por entrevista" style="border-left:2px solid #475569">P/E</th>
+                                <th title="Entrevistas por cotización">E/C</th>
+                                <th title="Cotizaciones por cierre">C/V</th>
+                                <th title="Solicitudes por cierre">S/V</th>
+                                <th title="Contactos por cierre" style="border-left:2px solid #475569">P/V</th>
+                                <th title="Contactos por solicitud">P/S</th>
+                                <th title="Prima Total" style="border-left:2px solid #475569">Neta</th>
+                                <th title="Prima por cierre">$/V</th>
+                                <th title="Prima por solicitud">$/S</th>
+                                <th title="Solicitudes en días rojos"
+                                    style="border-left:2px solid #475569;color:var(--red)">S (R)</th>
+                                <th title="Prima en días rojos" style="color:var(--red)">$ (R)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lb-body">
+                            <tr class="no-data-row">
+                                <td colspan="17">No hay datos. Carga entradas en la Bitácora.</td>
+                            </tr>
+                        </tbody>
+                        <tfoot id="lb-foot"></tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════ TAB: KPIs ═══════════════════════════════ -->
+        <div id="tab-kpis" class="tab-panel">
+            <div class="card">
+                <div class="charts-controls">
+                    <div>
+                        <label class="field-label">Mes</label>
+                        <select id="kpi-mes-sel" onchange="renderKPIs()">
+                            <option value="">Todos los meses</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="charts-grid">
+                    <div class="chart-card full">
+                        <h3><i class="fa fa-dollar-sign"></i> Prima Neta por Agente</h3>
+                        <div class="chart-wrap"><canvas id="kpiPrima"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3><i class="fa fa-bars-progress"></i> Cierres (V) vs Contactos (P)</h3>
+                        <div class="chart-wrap"><canvas id="kpiVolumen"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3><i class="fa fa-bullseye"></i> % Eficiencia: Conversión de P ➔ V (Cierre)</h3>
+                        <div class="chart-wrap"><canvas id="kpiEfectividad"></canvas></div>
+                    </div>
+                    <div class="chart-card full">
+                        <h3><i class="fa fa-arrows-to-circle"></i> Volumen PECVS Completo por Agente</h3>
+                        <div class="chart-wrap"><canvas id="kpiVolumeFull"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3><i class="fa fa-hand-holding-dollar"></i> Prima Promedio por Cierre ($/V)</h3>
+                        <div class="chart-wrap"><canvas id="kpiPrimaV"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3><i class="fa fa-money-bill-trend-up"></i> Prima Promedio por Solicitud ($/S)</h3>
+                        <div class="chart-wrap"><canvas id="kpiPrimaS"></canvas></div>
+                    </div>
+                    <!-- FUNNEL RATIOS KPI -->
+                    <div class="chart-card">
+                        <h3><i class="fa fa-percentage"></i> % Eficiencia: Conversión de P ➔ E</h3>
+                        <div class="chart-wrap"><canvas id="kpiRatioEP"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3><i class="fa fa-percentage"></i> % Eficiencia: Conversión de E ➔ C</h3>
+                        <div class="chart-wrap"><canvas id="kpiRatioCE"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3><i class="fa fa-percentage"></i> % Eficiencia: Conversión de C ➔ V</h3>
+                        <div class="chart-wrap"><canvas id="kpiRatioVC"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3><i class="fa fa-percentage"></i> % Eficiencia: Conversión de V ➔ S</h3>
+                        <div class="chart-wrap"><canvas id="kpiRatioSV"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════ TAB: TENDENCIAS ═══════════════════════════════ -->
+        <div id="tab-charts" class="tab-panel">
+            <div class="card">
+                <div class="charts-controls">
+                    <div>
+                        <label class="field-label">Agente</label>
+                        <select id="chart-agent-sel" onchange="renderCharts()">
+                            <option value="__all__">Todos (Total equipo)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="field-label">Mes</label>
+                        <select id="chart-mes-sel" onchange="renderCharts()">
+                            <option value="">Todos los meses</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="charts-grid">
+                    <div class="chart-card full">
+                        <h3><i class="fa fa-bars-progress"></i> Volumen PECVS semanal</h3>
+                        <div class="chart-wrap"><canvas id="chartVolume"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3><i class="fa fa-dollar-sign"></i> Prima Neta por semana</h3>
+                        <div class="chart-wrap"><canvas id="chartPrima"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3><i class="fa fa-percent"></i> Ratios de embudo (P/E · E/C · C/V)</h3>
+                        <div class="chart-wrap"><canvas id="chartRatios"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3><i class="fa fa-bullseye"></i> Ratios de efectividad (P/V · P/S)</h3>
+                        <div class="chart-wrap"><canvas id="chartEfectividad"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3><i class="fa fa-coins"></i> Prima promedio por cierre ($/V) y por solicitud ($/S)</h3>
+                        <div class="chart-wrap"><canvas id="chartPrimaRatios"></canvas></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ TAB: REPORTE MENSUAL ═══════════════════ -->
+        <div id="tab-reporte" class="tab-panel">
+            <div class="card">
+                <p class="card-title"><i class="fa fa-file-lines"></i> Reporte Mensual del Coach</p>
+                <div class="info-box">Este espacio es para que el coach registre su análisis, observaciones y
+                    compromisos del mes. Queda incluido al exportar el JSON para enviarlo a dirección.</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+                    <div style="display:flex;gap:8px;">
+                        <div style="flex:1;">
+                            <div
+                                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                                <p class="card-title"><i class="fa fa-file-contract"></i> Reportes Mensuales de Coaches
+                                </p>
+                                <button class="btn btn-sm"
+                                    onclick="document.getElementById('modal-reporte-log').classList.add('open')">
+                                    <i class="fa fa-list"></i> Ver Historial de Reportes
+                                </button>
+                            </div>
+
+                            <div id="promotor-reporte-view">
+                                <div class="empty-state">
+                                    <i class="fa fa-file-invoice"></i> Selecciona un reporte del historial para
+                                    visualizarlo.
+                                </div>
+                            </div>
+                            <!-- HIDDEN FORM ELEMENTS REMOVED -->
+                            <div style="display:none">
+
+                            </div>
+                            <div style="width:100px;">
+                                <label class="field-label">Año</label>
+                                <input type="number" id="rpt-year" value="2026" min="2020" max="2040"
+                                    onchange="tryLoadReporte()">
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:flex-end;gap:8px;">
+                            <button class="btn btn-green" onclick="saveReporte()"><i
+                                    class="fa fa-floppy-disk"></i>Guardar
+                                reporte</button>
+                            <button class="btn btn-red btn-sm" onclick="deleteReporte()"><i
+                                    class="fa fa-trash"></i>Eliminar</button>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                        <div>
+                            <label class="field-label">Análisis general del mes</label>
+                            <textarea id="rpt-analisis" rows="6"
+                                placeholder="Describe el desempeño general del equipo este mes..."></textarea>
+                        </div>
+                        <div>
+                            <label class="field-label">Sospecha de fraude en actividad</label>
+                            <textarea id="rpt-agentes" rows="6"
+                                placeholder="¿Crees que algún agente infló actividad (para aparentar hacer más de lo que realmente hizo)? ¿O desinfló actividad (para aparentar ser más efectivo)? Descríbelo aquí."></textarea>
+                        </div>
+                        <div>
+                            <label class="field-label">Compromisos del coach para el siguiente mes</label>
+                            <textarea id="rpt-compromisos" rows="5"
+                                placeholder="¿Qué harás diferente? ¿Qué apoyo darás a tu equipo?"></textarea>
+                        </div>
+                        <div>
+                            <label class="field-label">Notas adicionales</label>
+                            <textarea id="rpt-notas" rows="5"
+                                placeholder="Cualquier otra observación relevante..."></textarea>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+                        <span id="rpt-msg" style="font-size:12px;color:var(--green);display:none;"><i
+                                class="fa fa-check"></i> Reporte guardado</span>
+                        <button class="btn btn-sm"
+                            onclick="document.getElementById('modal-reporte-log').classList.add('open')"><i
+                                class="fa fa-list"></i> Ver log (reportes)</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- LOG BITACORA MODAL -->
+        <div class="modal-overlay" id="modal-bitacora-log">
+            <div class="modal-box">
+                <button class="modal-close"
+                    onclick="document.getElementById('modal-bitacora-log').classList.remove('open')">&times;</button>
+                <h2><i class="fa fa-clock-rotate-left"></i> Log de Transacciones (Bitácora)</h2>
+                <div class="history-grid" id="history-grid" style="margin-top:16px;">
+                    <div class="empty-state"><i class="fa fa-inbox"></i>No hay entradas aún. Llena y guarda la bitácora.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LOG REPORTE MODAL -->
+        <div class="modal-overlay" id="modal-reporte-log">
+            <div class="modal-box" style="max-width:800px;">
+                <button class="modal-close"
+                    onclick="document.getElementById('modal-reporte-log').classList.remove('open')">&times;</button>
+                <h2><i class="fa fa-folder-open"></i> Log de Reportes de Coaches</h2>
+                <div id="rpt-history" style="margin-top:16px; display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <div class="empty-state">No hay reportes de coaches aún.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONFIG MODAL -->
+        <div class="modal-overlay" id="config-modal">
+            <div class="modal-box">
+                <button class="modal-close" onclick="closeConfig()">&times;</button>
+                <h2><i class="fa fa-cog"></i> Configuración</h2>
+                <div style="display:flex;flex-direction:column;gap:20px;">
+                    <div>
+                        <label class="field-label">Nombre del Promotor</label>
+                        <input type="text" id="inp-promotor" placeholder="Tu nombre">
+                    </div>
+                    <div>
+                        <label class="field-label">Código de Promotoría</label>
+                        <input type="text" id="inp-promocode" placeholder="Ej. CENTRO-PR1">
+                        <p style="font-size:10px; color:var(--slate); margin-top:5px;">Este código es el que tus coaches
+                            deben ingresar en su app para que puedas ver sus datos.</p>
+                    </div>
+                    <div>
+                        <p class="section-label">Coaches Vinculados</p>
+                        <div class="agent-list" id="coach-list"></div>
+                        <p style="font-size:10px; color:var(--slate); margin-top:5px;">Los coaches que usen tu código
+                            aparecerán aquí automáticamente.</p>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+                        <button class="btn btn-sm" onclick="exportConfig()"><i class="fa fa-file-export"></i>Exportar
+                            Config</button>
+                        <button class="btn btn-sm" onclick="document.getElementById('import-config-file').click()"><i
+                                class="fa fa-file-import"></i>Importar Config</button>
+                        <input type="file" id="import-config-file" accept=".json" style="display:none"
+                            onchange="importConfig(event)">
+                    </div>
+                    <button class="btn btn-green" onclick="saveConfig()"><i class="fa fa-floppy-disk"></i>Guardar
+                        configuración</button>
+                </div>
+            </div>
+        </div>
+
+        <script type="module">
+            // --- FIREBASE CONFIG ---
+            const firebaseConfig = {
+                apiKey: "AIzaSyDPNoWHEktWMcxHTnxpGrbtzYz4wEf2EHo",
+                authDomain: "bitacora-agente.firebaseapp.com",
+                projectId: "bitacora-agente",
+                storageBucket: "bitacora-agente.firebasestorage.app",
+                messagingSenderId: "322544925589",
+                appId: "1:322544925589:web:25021c345574e9ee0c149c"
+            };
+
+            // --- IMPORT FIREBASE ---
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+            import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+            import { getFirestore, doc, setDoc, getDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+            // Initialize
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+            const provider = new GoogleAuthProvider();
+
+            // ─── STATE ───────────────────────────────────────────────────────────────────
+            const DAYS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+            const COLS = ['P', 'E', 'C', 'V', 'S'];
+            const MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+            let state = { promotorName: '', promotorCode: '', coaches: [], teamCodes: [], agents: [], entries: [], reportes: [] };
+            let user = null;
+            let currentWeeks = [];
+            let unsubCoaches = null;
+            let unsubAgents = null;
+
+            // ─── AUTH LOGIC ──────────────────────────────────────────────────────────────
+            document.getElementById('login-btn').addEventListener('click', () => {
+                signInWithPopup(auth, provider).catch(err => alert("Error login: " + err.message));
+            });
+
+            window.logout = function () {
+                if (confirm("¿Cerrar sesión?")) signOut(auth);
+            };
+
+            onAuthStateChanged(auth, async (u) => {
+                if (u) {
+                    user = u;
+                    document.getElementById('login-overlay').classList.add('hidden');
+                    await loadPromotorData();
+                    init();
+                } else {
+                    user = null;
+                    document.getElementById('login-overlay').classList.remove('hidden');
+                }
+            });
+
+            // ─── SERVICE WORKER ──────────────────────────────────────────────────────────
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('sw.js').then(reg => {
+                        reg.onupdatefound = () => {
+                            const newSW = reg.installing;
+                            newSW.onstatechange = () => {
+                                if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                                    if (confirm('Nueva versión disponible (v1.3.6). ¿Recargar ahora para actualizar?')) {
+                                        window.location.reload();
+                                    }
+                                }
+                            };
+                        };
+                    }).catch(err => console.error('SW registration failed:', err));
+                });
+            }
+
+            async function loadPromotorData() {
+                if (!user) return;
+                const docRef = doc(db, "promotores", user.email);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    state.promotorName = data.promotorName || '';
+                    state.promotorCode = data.promotorCode || '';
+                    document.getElementById('promocode-display').textContent = 'Código: ' + (state.promotorCode || 'Sin Código');
+                    startListeningCoaches();
+                } else {
+                    state.promotorName = user.displayName;
+                    openConfig();
+                }
+            }
+
+            async function savePromotorData() {
+                if (!user) return;
+                try {
+                    await setDoc(doc(db, "promotores", user.email), {
+                        promotorName: state.promotorName,
+                        promotorCode: state.promotorCode
+                    });
+                    document.getElementById('promocode-display').textContent = 'Código: ' + (state.promotorCode || 'Sin Código');
+                } catch (err) { console.error("Error saving promotor:", err); }
+            }
+
+            function startListeningCoaches() {
+                if (unsubCoaches) unsubCoaches();
+                if (!state.promotorCode) return;
+
+                const q = query(collection(db, "coaches"), where("promotorCode", "==", state.promotorCode));
+                unsubCoaches = onSnapshot(q, (snapshot) => {
+                    const allCoaches = [];
+                    const allTeamCodes = [];
+                    const allAggregatedReportes = [];
+
+                    snapshot.forEach((doc) => {
+                        const coachData = doc.data();
+                        allCoaches.push(coachData.coachName || 'Sin Nombre');
+                        if (coachData.teamCode) allTeamCodes.push(coachData.teamCode);
+                        if (coachData.reportes) {
+                            coachData.reportes.forEach(r => {
+                                r.coachName = coachData.coachName;
+                                allAggregatedReportes.push(r);
+                            });
+                        }
+                    });
+
+                    state.coaches = allCoaches;
+                    state.teamCodes = allTeamCodes;
+                    state.reportes = allAggregatedReportes;
+
+                    renderCoachList();
+                    startListeningAgents();
+                });
+            }
+
+            function startListeningAgents() {
+                if (unsubAgents) unsubAgents();
+                if (!state.teamCodes.length) {
+                    state.agents = [];
+                    state.entries = [];
+                    refreshAll();
+                    return;
+                }
+
+                // Group queries because Firestore 'in' matches max 30 values
+                const q = query(collection(db, "users"), where("teamCode", "in", state.teamCodes.slice(0, 30)));
+                unsubAgents = onSnapshot(q, (snapshot) => {
+                    const allEntries = [];
+                    const allAgents = [];
+                    snapshot.forEach((doc) => {
+                        const agentData = doc.data();
+                        if (agentData.agentName) {
+                            allAgents.push(agentData.agentName);
+                            if (agentData.entries) {
+                                agentData.entries.forEach(e => {
+                                    e.agent = agentData.agentName;
+                                    const existingIdx = allEntries.findIndex(ae => ae.agent === e.agent && ae.mes === e.mes && ae.semana == e.semana);
+                                    if (existingIdx >= 0) allEntries[existingIdx] = e;
+                                    else allEntries.push(e);
+                                });
+                            }
+                        }
+                    });
+                    state.agents = allAgents;
+                    state.entries = allEntries;
+                    refreshAll();
+                });
+            }
+
+            // ─── INIT ─────────────────────────────────────────────────────────────────────
+            window.init = function () {
+                updateBitacoraCalendar();
+                refreshAll();
+                if (state.entries && state.entries.length > 0) {
+                    // Root cause fix: expose module functions to window - v1.3.5
+                }
+            }
+
+            window.saveState = async function () {
+                await savePromotorData();
+            }
+
+            function refreshAll() {
+                document.getElementById('promotor-display').textContent = 'Promotor: ' + (state.promotorName || '—');
+                refreshAgentSelects();
+                renderLeaderboard();
+                renderCharts();
+                renderKPIs();
+                refreshMonthFilters();
+                renderReporteHistory();
+            }
+
+            // ─── TABS ─────────────────────────────────────────────────────────────────────
+            function switchTab(name, btn) {
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById('tab-' + name).classList.add('active');
+                btn.classList.add('active');
+                if (name === 'charts') renderCharts();
+                if (name === 'kpis') renderKPIs();
+                if (name === 'leaderboard') renderLeaderboard();
+                if (name === 'reporte') renderReporteHistory();
+            }
+
+            // ─── CONFIG ──────────────────────────────────────────────────────────────────
+            window.openConfig = function () {
+                document.getElementById('inp-coach').value = state.coachName || '';
+                document.getElementById('inp-teamcode').value = state.teamCode || '';
+                renderAgentList();
+                document.getElementById('config-modal').classList.add('open');
+            }
+
+            window.closeConfig = function () { document.getElementById('config-modal').classList.remove('open'); }
+
+            window.addAgent = function () { }
+            window.removeAgent = function () { }
+
+            window.renderAgentList = function () {
+                const el = document.getElementById('agent-list');
+                if (!state.agents.length) { el.innerHTML = '<div style="color:var(--slate);font-size:11px;padding:8px 0;">No hay agentes vinculados con este código de equipo.</div>'; return; }
+                el.innerHTML = state.agents.map((a, i) => `
+                <div class="agent-chip" style="justify-content:space-between; padding:10px 15px;">
+                    <span style="font-weight:600;"><i class="fa fa-user-check" style="color:var(--green); margin-right:8px;"></i>${a}</span>
+                    <span style="font-size:9px; color:var(--slate); text-transform:uppercase; letter-spacing:1px;">Activo</span>
+                </div>
+            `).join('');
+            }
+
+            window.saveConfig = async function () {
+                try {
+                    // Determine source element to show loading state if possible
+                    const btn = (window.event && window.event.target && window.event.target.tagName === 'BUTTON') ? window.event.target : null;
+                    const oldHtml = btn ? btn.innerHTML : '';
+                    if (btn) {
+                        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Guardando...';
+                        btn.disabled = true;
+                    }
+
+                    state.coachName = document.getElementById('inp-coach').value.trim();
+                    state.teamCode = document.getElementById('inp-teamcode').value.trim();
+
+                    await saveState();
+                    startListeningAgents();
+                    refreshAll();
+
+                    if (btn) {
+                        btn.innerHTML = '<i class="fa fa-check"></i> ¡Guardado!';
+                        setTimeout(() => {
+                            btn.innerHTML = oldHtml;
+                            btn.disabled = false;
+                            closeConfig();
+                        }, 1000);
+                    } else {
+                        closeConfig();
+                    }
+                } catch (err) {
+                    console.error("Error saving coach:", err);
+                    alert("Error al guardar: " + err.message);
+                }
+            }
+
+            window.exportConfig = function () {
+                const config = { coachName: state.coachName, teamCode: state.teamCode };
+                const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `config_coach_${(state.coachName || 'coach').replace(/\s+/g, '_')}.json`;
+                a.click();
+            }
+
+            window.importConfig = function (event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (data.coachName || data.teamCode) {
+                            if (confirm(`¿Importar configuración de ${data.coachName || 'Sin Nombre'}?`)) {
+                                state.coachName = data.coachName || state.coachName;
+                                state.teamCode = data.teamCode || state.teamCode;
+                                document.getElementById('inp-coach').value = state.coachName;
+                                document.getElementById('inp-teamcode').value = state.teamCode;
+                                await saveState();
+                                startListeningAgents();
+                                refreshAll();
+                                alert("✅ Configuración importada y guardada.");
+                            }
+                        } else {
+                            alert("El archivo no parece ser una configuración válida.");
+                        }
+                    } catch (err) { alert("Error al importar: " + err.message); }
+                };
+                reader.readAsText(file);
+            }
+
+            function refreshAgentSelects() {
+                const opts = state.agents.map(a => `<option value="${a}">${a}</option>`).join('');
+                ['sel-agent', 'chart-agent-sel'].forEach(id => {
+                    const el = document.getElementById(id);
+                    const cur = el.value;
+                    if (id === 'chart-agent-sel') {
+                        el.innerHTML = '<option value="__all__">Todos (Total equipo)</option>' + opts;
+                    } else {
+                        el.innerHTML = '<option value="">— Selecciona agente —</option>' + opts;
+                    }
+                    el.value = cur;
+                });
+            }
+
+            // ─── CALENDAR LOGIC ───────────────────────────────────────────────────────────
+
+            function getMonthCalendar(year, month) {
+                const daysInMonth = new Date(year, month, 0).getDate();
+                const firstDayJS = new Date(year, month - 1, 1).getDay(); // 0=Sun
+                const firstDayMon = (firstDayJS + 6) % 7; // 0=Mon ... 6=Sun
+                const weeks = [];
+                let week = [];
+                let dow = firstDayMon;
+                for (let d = 1; d <= daysInMonth; d++) {
+                    week.push({ dayName: DAYS[dow], date: d });
+                    if (dow === 6 || d === daysInMonth) { weeks.push(week); week = []; }
+                    dow = (dow + 1) % 7;
+                }
+                return weeks;
+            }
+
+            function updateBitacoraCalendar() {
+                const month = parseInt(document.getElementById('sel-month').value);
+                const year = parseInt(document.getElementById('inp-year').value);
+                if (!month || !year) return;
+                currentWeeks = getMonthCalendar(year, month);
+                const sel = document.getElementById('sel-semana');
+                const prev = sel.value;
+                sel.innerHTML = currentWeeks.map((w, i) => {
+                    const first = w[0], last = w[w.length - 1];
+                    return `<option value="${i + 1}">Sem ${i + 1} &mdash; ${first.dayName.slice(0, 3)} ${first.date} al ${last.dayName.slice(0, 3)} ${last.date}</option>`;
+                }).join('');
+                sel.value = (prev && parseInt(prev) <= currentWeeks.length) ? prev : '1';
+                updateWeekTable();
+            }
+
+            function updateWeekTable() {
+                const semIdx = parseInt(document.getElementById('sel-semana').value) - 1;
+                const weekDays = currentWeeks[semIdx] || [];
+                buildWeekTable(weekDays);
+                // show info
+                const month = parseInt(document.getElementById('sel-month').value);
+                const year = parseInt(document.getElementById('inp-year').value);
+                const mesStr = MONTHS_ES[month - 1] + ' ' + year;
+                const info = document.getElementById('week-info');
+                if (weekDays.length) {
+                    info.textContent = `📅 ${mesStr} · Semana ${semIdx + 1} de ${currentWeeks.length} · Días: ${weekDays.map(d => d.dayName + ' ' + d.date).join(', ')}`;
+                }
+                updateTotals(false);
+                autoLoadBitacora();
+            }
+
+            // ─── WEEK TABLE ───────────────────────────────────────────────────────────────
+            function buildWeekTable(weekDays) {
+                const tbody = document.getElementById('week-body');
+                tbody.innerHTML = weekDays.map(({ dayName, date }) => `
+    <tr data-day="${dayName}">
+      <td class="day-label">${dayName} <span style="font-size:10px;color:var(--slate);font-weight:400;">${date}</span></td>
+      ${COLS.map(c => `<td><input type="number" class="num-input" data-day="${dayName}" data-col="${c}" min="0" value="0" oninput="updateTotals()"></td>`).join('')}
+      <td><input type="number" class="num-input prima-input" data-day="${dayName}" data-col="prima" min="0" value="0" step="0.01" oninput="updateTotals()"></td>
+      <td id="funnel-${dayName}" style="font-size:16px;text-align:center;">—</td>
+    </tr>`).join('');
+            }
+
+            function getInputVal(day, col) {
+                const el = document.querySelector(`input[data-day="${day}"][data-col="${col}"]`);
+                return el ? (parseFloat(el.value) || 0) : 0;
+            }
+
+            function updateTotals(autoSave = true) {
+                const totals = { P: 0, E: 0, C: 0, V: 0, S: 0, prima: 0 };
+                document.querySelectorAll('#week-body tr').forEach(row => {
+                    const day = row.dataset.day;
+                    const dvals = {};
+                    COLS.forEach(c => {
+                        dvals[c] = parseFloat(document.querySelector(`input[data-day="${day}"][data-col="${c}"]`).value) || 0;
+                    });
+                    dvals.prima = parseFloat(document.querySelector(`input[data-day="${day}"][data-col="prima"]`).value) || 0;
+
+                    const { ok, errors } = validateDay(dvals);
+                    if (ok) {
+                        COLS.forEach(c => totals[c] += dvals[c]);
+                        totals.prima += dvals.prima;
+                    }
+
+                    const allZero = dvals.P === 0 && dvals.E === 0 && dvals.C === 0 && dvals.V === 0 && dvals.S === 0 && dvals.prima === 0;
+                    const cell = document.getElementById('funnel-' + day);
+                    if (cell) {
+                        cell.textContent = allZero ? '—' : (ok ? '🟢' : '🔴');
+                        cell.title = ok ? 'Todo correcto' : '⚠️ ERRORES (No sumados al total):\n• ' + errors.join('\n• ');
+                    }
+                });
+                COLS.forEach(c => { document.getElementById('tt-' + c).textContent = totals[c]; });
+                document.getElementById('tt-$').textContent = '$' + totals.prima.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                if (autoSave) saveEntry(true);
+            }
+
+            function clearForm(autoSave = true) {
+                document.querySelectorAll('#week-body input').forEach(inp => { inp.value = 0; });
+                updateTotals(autoSave);
+            }
+
+            // ─── SAVE / LOAD ENTRY ────────────────────────────────────────────────────────
+            function getMesStr() {
+                const m = parseInt(document.getElementById('sel-month').value);
+                const y = parseInt(document.getElementById('inp-year').value);
+                return MONTHS_ES[m - 1] + ' ' + y;
+            }
+
+            function saveEntry(silent = false) {
+                const agent = document.getElementById('sel-agent').value;
+                const semana = document.getElementById('sel-semana').value;
+                const mes = getMesStr();
+                if (!agent || !semana) {
+                    if (!silent) alert('Selecciona agente y semana.');
+                    return;
+                }
+
+                // collect only rows currently in the table
+                const dias = [];
+                document.querySelectorAll('#week-body tr').forEach(row => {
+                    const day = row.dataset.day;
+                    dias.push({
+                        dia: day, P: getInputVal(day, 'P'), E: getInputVal(day, 'E'),
+                        C: getInputVal(day, 'C'), V: getInputVal(day, 'V'), S: getInputVal(day, 'S'),
+                        prima: getInputVal(day, 'prima')
+                    });
+                });
+                const totales = { P: 0, E: 0, C: 0, V: 0, S: 0, prima: 0 };
+                dias.forEach(d => { COLS.forEach(c => totales[c] += d[c]); totales.prima += d.prima; });
+
+                const idx = state.entries.findIndex(e => e.agent === agent && e.mes === mes && e.semana == semana);
+                const entry = { agent, mes, semana, dias, totales };
+                if (idx >= 0) state.entries[idx] = entry; else state.entries.push(entry);
+
+                saveState();
+                if (!silent) {
+                    refreshAll();
+                    const msg = document.getElementById('save-msg');
+                    msg.style.display = 'inline-flex'; setTimeout(() => msg.style.display = 'none', 2500);
+                }
+            }
+
+            function autoLoadBitacora() {
+                const agent = document.getElementById('sel-agent').value;
+                const semana = document.getElementById('sel-semana').value;
+                const mes = getMesStr();
+                const entry = state.entries.find(e => e.agent === agent && e.mes === mes && e.semana == semana);
+                if (!entry) { clearForm(false); return; }
+                entry.dias.forEach(d => {
+                    COLS.forEach(c => { const inp = document.querySelector(`input[data-day="${d.dia}"][data-col="${c}"]`); if (inp) inp.value = d[c]; });
+                    const pi = document.querySelector(`input[data-day="${d.dia}"][data-col="prima"]`); if (pi) pi.value = d.prima;
+                });
+                updateTotals(false);
+            }
+
+            // ─── HISTORY ──────────────────────────────────────────────────────────────────
+            function renderHistory() {
+                const grid = document.getElementById('history-grid');
+                if (!state.entries.length) {
+                    grid.innerHTML = '<div class="empty-state"><i class="fa fa-inbox"></i>No hay entradas aún. Llena y guarda la bitácora arriba.</div>';
+                    return;
+                }
+                grid.innerHTML = state.entries.map((e, i) => `
+    <div class="history-chip" onclick="loadEntryIntoForm(${i})">
+      <span style="font-weight:700;color:var(--gold)">${e.agent}</span>
+      <span style="color:var(--slate)">${e.mes} · Sem ${e.semana}</span>
+      <span style="color:var(--teal);font-size:11px;">P:${e.totales.P} E:${e.totales.E} V:${e.totales.V}</span>
+      <button class="del-entry" onclick="deleteEntry(event,${i})" title="Eliminar"><i class="fa fa-xmark"></i></button>
+    </div>`).join('');
+            }
+
+            function loadEntryIntoForm(i) {
+                const e = state.entries[i];
+                document.getElementById('sel-agent').value = e.agent;
+                // parse mes string (e.g. "Abril 2026") back to month+year
+                const parts = e.mes.split(' ');
+                const mIdx = MONTHS_ES.indexOf(parts[0]);
+                if (mIdx >= 0) {
+                    document.getElementById('sel-month').value = mIdx + 1;
+                    document.getElementById('inp-year').value = parseInt(parts[1]) || new Date().getFullYear();
+                    updateBitacoraCalendar(); // rebuild weeks
+                }
+                document.getElementById('sel-semana').value = e.semana;
+                updateWeekTable(); // rebuild table for that semana
+                e.dias.forEach(d => {
+                    COLS.forEach(c => { const inp = document.querySelector(`input[data-day="${d.dia}"][data-col="${c}"]`); if (inp) inp.value = d[c]; });
+                    const pi = document.querySelector(`input[data-day="${d.dia}"][data-col="prima"]`); if (pi) pi.value = d.prima;
+                });
+                updateTotals();
+                switchTab('bitacora', document.querySelector('.tab-btn'));
+                document.getElementById('modal-bitacora-log').classList.remove('open');
+            }
+
+            function deleteEntry(ev, i) {
+                ev.stopPropagation();
+                if (!confirm('¿Eliminar esta entrada?')) return;
+                state.entries.splice(i, 1);
+                saveState();
+                refreshAll();
+            }
+
+            // ─── MONTH FILTERS ────────────────────────────────────────────────────────────
+            function refreshMonthFilters() {
+                const meses = [...new Set(state.entries.map(e => e.mes))];
+                const opts = meses.map(m => `<option value="${m}">${m}</option>`).join('');
+                ['lb-mes-filter', 'chart-mes-sel', 'kpi-mes-sel'].forEach(id => {
+                    const el = document.getElementById(id); const cur = el.value;
+                    el.innerHTML = (id === 'lb-mes-filter' ? '<option value="">Todos los meses</option>' : '<option value="">Todos los meses</option>') + opts;
+                    if (meses.includes(cur)) el.value = cur;
+                });
+            }
+
+            // ─── LEADERBOARD ──────────────────────────────────────────────────────────────
+            function ratio(a, b) { return b > 0 ? (a / b).toFixed(2) : '—'; }
+
+            let showRedData = false;
+            function toggleRed() {
+                showRedData = !showRedData;
+                renderLeaderboard();
+                const btn = document.getElementById('btn-tog-red');
+                btn.innerHTML = showRedData ? '<i class="fa fa-eye-slash"></i> Ocultar Conciliación' : '<i class="fa fa-eye"></i> Ver Conciliación Real';
+                btn.classList.toggle('btn-red', showRedData);
+            }
+
+            function validateDay(d) {
+                if (d.P === 0 && d.E === 0 && d.C === 0 && d.V === 0 && d.S === 0 && d.prima === 0) return { ok: true, errors: [] };
+                const errors = [];
+                if (d.P < d.E) errors.push("Contactos (P) < Entrevistas (E)");
+                if (d.E < d.C) errors.push("Entrevistas (E) < Cotizaciones (C)");
+                if (d.C < d.V) errors.push("Cotizaciones (C) < Cierres (V)");
+                if (d.S < d.V) errors.push("Solicitudes (S) < Cierres (V)");
+                if (d.V === 0 && d.S > 0) {
+                    errors.push("Si hay solicitudes, como mínimo tiene que haber 1 cierre");
+                } else if (d.S > d.V * 2) {
+                    errors.push("Solicitudes (S) > Doble de Cierres (2V)");
+                }
+                if (d.S > 0 && d.prima < 1) errors.push("Debe ingresar Prima ($) si hay solicitudes");
+                return { ok: errors.length === 0, errors };
+            }
+
+            function renderLeaderboard() {
+                const mesF = document.getElementById('lb-mes-filter').value;
+                const semF = document.getElementById('lb-sem-filter').value;
+                let filtered = state.entries.filter(e =>
+                    (!mesF || e.mes === mesF) && (!semF || e.semana == semF)
+                );
+
+                // aggregate per agent (re-summing only valid days + tracking red activity)
+                const agMap = {};
+                filtered.forEach(e => {
+                    if (!agMap[e.agent]) agMap[e.agent] = { P: 0, E: 0, C: 0, V: 0, S: 0, prima: 0, redS: 0, redPrima: 0 };
+                    e.dias.forEach(d => {
+                        const { ok } = validateDay(d);
+                        if (ok) {
+                            COLS.forEach(c => agMap[e.agent][c] += d[c]);
+                            agMap[e.agent].prima += d.prima;
+                        } else {
+                            agMap[e.agent].redS += d.S;
+                            agMap[e.agent].redPrima += d.prima;
+                        }
+                    });
+                });
+
+                const agents = Object.keys(agMap);
+                const thead = document.getElementById('lb-thead');
+                const tbody = document.getElementById('lb-body');
+                const tfoot = document.getElementById('lb-foot');
+
+                if (!agents.length) {
+                    tbody.innerHTML = `<tr class="no-data-row"><td colspan="${showRedData ? 20 : 17}">No hay datos con los filtros actuales.</td></tr>`;
+                    tfoot.innerHTML = ''; return;
+                }
+
+                // Dynamic Header
+                thead.innerHTML = `
+                <tr>
+                    <th rowspan="2">#</th>
+                    <th rowspan="2">Agente</th>
+                    <th colspan="5" style="border-left:2px solid #475569;border-bottom:1px solid #475569">Volumen PECVS$</th>
+                    <th colspan="4" style="border-left:2px solid #475569;border-bottom:1px solid #475569">Ratios PECVS</th>
+                    <th colspan="2" style="border-left:2px solid #475569;border-bottom:1px solid #475569">Ratios</th>
+                    <th colspan="3" style="border-left:2px solid #475569;border-bottom:1px solid #475569">Prima promedio ($)</th>
+                    ${showRedData ? `<th colspan="3" style="border-left:2px solid var(--red);border-bottom:1px solid var(--red);background:rgba(239,68,68,0.1)">RECONCILIACIÓN (🔴 + 🟢)</th>` : ''}
+                </tr>
+                <tr>
+                    <th style="border-left:2px solid #475569">P</th><th>E</th><th>C</th><th>V</th><th>S</th>
+                    <th style="border-left:2px solid #475569">P/E</th><th>E/C</th><th>C/V</th><th>S/V</th>
+                    <th style="border-left:2px solid #475569">P/V</th><th>P/S</th>
+                    <th style="border-left:2px solid #475569">Neta</th><th>$/V</th><th>$/S</th>
+                    ${showRedData ? `
+                    <th style="border-left:2px solid var(--red);color:var(--red)">S (R)</th>
+                    <th style="color:var(--red)">$ (R)</th>
+                    <th style="border-left:1px solid var(--red);color:var(--gold)">$ TOTAL</th>
+                    ` : ''}
+                </tr>`;
+
+                // sort by prima desc
+                agents.sort((a, b) => agMap[b].prima - agMap[a].prima);
+
+                tbody.innerHTML = agents.map((ag, i) => {
+                    const d = agMap[ag];
+                    const primaFmt = d.prima.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    const redPrimaFmt = d.redPrima.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                    const totalPrimaFmt = (d.prima + d.redPrima).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    return `<tr>
+                    <td class="rank-num">${i + 1}</td>
+                    <td class="agent-name-cell">${ag}</td>
+                    <td style="border-left:2px solid #475569">${d.P}</td><td>${d.E}</td><td>${d.C}</td><td>${d.V}</td><td>${d.S}</td>
+                    <td class="ratio-cell" style="border-left:2px solid #475569">${ratio(d.E, d.P)}</td>
+                    <td class="ratio-cell">${ratio(d.C, d.E)}</td>
+                    <td class="ratio-cell">${ratio(d.V, d.C)}</td>
+                    <td class="ratio-cell">${ratio(d.S, d.V)}</td>
+                    <td class="ratio-cell" style="border-left:2px solid #475569">${ratio(d.V, d.P)}</td>
+                    <td class="ratio-cell">${ratio(d.S, d.P)}</td>
+                    <td style="font-weight:700;color:var(--green);border-left:2px solid #475569">$${primaFmt}</td>
+                    <td class="ratio-cell">${ratio(d.prima, d.V)}</td>
+                    <td class="ratio-cell">${ratio(d.prima, d.S)}</td>
+                    ${showRedData ? `
+                    <td style="border-left:2px solid var(--red);color:var(--red);opacity:0.8">${d.redS}</td>
+                    <td style="color:var(--red);opacity:0.8">$${redPrimaFmt}</td>
+                    <td style="border-left:1px solid var(--red);font-weight:700;color:var(--gold)">$${totalPrimaFmt}</td>
+                    ` : ''}
+                </tr>`;
+                }).join('');
+
+                // totals row
+                const tot = { P: 0, E: 0, C: 0, V: 0, S: 0, prima: 0, redS: 0, redPrima: 0 };
+                agents.forEach(ag => {
+                    COLS.forEach(c => tot[c] += agMap[ag][c]);
+                    tot.prima += agMap[ag].prima;
+                    tot.redS += agMap[ag].redS;
+                    tot.redPrima += agMap[ag].redPrima;
+                });
+                const totPrima = tot.prima.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const totRedPrima = tot.redPrima.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                const totFinal = (tot.prima + tot.redPrima).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+                tfoot.innerHTML = `<tr>
+                <td></td><td style="text-align:left;font-weight:800;">EQUIPO TOTAL</td>
+                <td style="border-left:2px solid #475569">${tot.P}</td><td>${tot.E}</td><td>${tot.C}</td><td>${tot.V}</td><td>${tot.S}</td>
+                <td style="border-left:2px solid #475569">${ratio(tot.E, tot.P)}</td><td>${ratio(tot.C, tot.E)}</td>
+                <td>${ratio(tot.V, tot.C)}</td><td>${ratio(tot.S, tot.V)}</td>
+                <td style="border-left:2px solid #475569">${ratio(tot.V, tot.P)}</td><td>${ratio(tot.S, tot.P)}</td>
+                <td style="font-weight:800;color:var(--gold);border-left:2px solid #475569">$${totPrima}</td>
+                <td>${ratio(tot.prima, tot.V)}</td><td>${ratio(tot.prima, tot.S)}</td>
+                ${showRedData ? `
+                <td style="border-left:2px solid var(--red);color:var(--red)">${tot.redS}</td>
+                <td style="color:var(--red)">$${totRedPrima}</td>
+                <td style="border-left:1px solid var(--red);color:var(--gold);font-weight:800">$${totFinal}</td>
+                ` : ''}
+            </tr>`;
+            }
+
+            // ─── CHARTS ──────────────────────────────────────────────────────────────────
+            let charts = {};
+            function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+
+            const CHART_COLORS = {
+                P: '#3b82f6', E: '#06b6d4', C: '#a855f7', V: '#10b981', S: '#f59e0b'
+            };
+
+            function renderCharts() {
+                const agSel = document.getElementById('chart-agent-sel').value;
+                const mesSel = document.getElementById('chart-mes-sel').value;
+
+                let entries = state.entries.filter(e =>
+                    (agSel === '__all__' || e.agent === agSel) &&
+                    (!mesSel || e.mes === mesSel)
+                );
+
+                // Build x-axis labels: unique "mes · SemN" sorted
+                const labelSet = [...new Set(entries.map(e => `${e.mes}·S${e.semana}`))].sort();
+                const labels = labelSet.map(l => l.replace('·', ' · Sem '));
+
+                // Aggregate per label (re-summing only valid days)
+                function aggByLabel(col) {
+                    return labelSet.map(lk => {
+                        const [m, sn] = lk.split('·'); const s = sn.replace('S', '');
+                        let suma = 0;
+                        entries.filter(e => e.mes === m && e.semana == s).forEach(e => {
+                            e.dias.forEach(d => {
+                                const { ok } = validateDay(d);
+                                if (ok) suma += (col === 'prima' ? d.prima : d[col]);
+                            });
+                        });
+                        return suma;
+                    });
+                }
+
+                // Volume chart
+                destroyChart('volume');
+                const ctxV = document.getElementById('chartVolume').getContext('2d');
+                charts['volume'] = new Chart(ctxV, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: COLS.map(c => ({
+                            label: c, data: aggByLabel(c), borderColor: CHART_COLORS[c],
+                            backgroundColor: CHART_COLORS[c] + '33', tension: .4, fill: false, pointRadius: 4
+                        }))
+                    },
+                    options: chartOpts('Actividad')
+                });
+
+                // Prima chart
+                destroyChart('prima');
+                const ctxP = document.getElementById('chartPrima').getContext('2d');
+                charts['prima'] = new Chart(ctxP, {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [{ label: 'Prima $', data: aggByLabel('prima'), backgroundColor: 'rgba(212,175,55,.5)', borderColor: '#d4af37', borderWidth: 2 }]
+                    },
+                    options: chartOpts('Prima Neta')
+                });
+
+                // Helper: compute ratio series per label
+                function ratioSeries(numCol, denCol, color, lbl) {
+                    return {
+                        label: lbl,
+                        data: labelSet.map(lk => {
+                            const [m, sn] = lk.split('·'); const s = sn.replace('S', '');
+                            const seg = entries.filter(e => e.mes === m && e.semana == s);
+                            const num = seg.reduce((sum, e) => sum + (numCol === 'prima' ? e.totales.prima : e.totales[numCol]), 0);
+                            const den = seg.reduce((sum, e) => sum + (denCol === 'prima' ? e.totales.prima : e.totales[denCol]), 0);
+                            return den > 0 ? parseFloat((num / den).toFixed(3)) : null;
+                        }),
+                        borderColor: color, backgroundColor: color + '22', tension: .4, fill: false, pointRadius: 4
+                    };
+                }
+
+                // Embudo ratios: P/E, E/C, C/V
+                destroyChart('ratios');
+                const ctxR = document.getElementById('chartRatios').getContext('2d');
+                charts['ratios'] = new Chart(ctxR, {
+                    type: 'line',
+                    data: {
+                        labels, datasets: [
+                            ratioSeries('E', 'P', '#06b6d4', '% Eficiencia: Conversión de P ➔ E'),
+                            ratioSeries('C', 'E', '#a855f7', '% Eficiencia: Conversión de E ➔ C'),
+                            ratioSeries('V', 'C', '#10b981', '% Eficiencia: Conversión de C ➔ V')
+                        ]
+                    },
+                    options: chartOpts('Unidades')
+                });
+
+                // Efectividad: P/V, P/S
+                destroyChart('efectividad');
+                const ctxEf = document.getElementById('chartEfectividad').getContext('2d');
+                charts['efectividad'] = new Chart(ctxEf, {
+                    type: 'line',
+                    data: {
+                        labels, datasets: [
+                            ratioSeries('V', 'P', '#f59e0b', '% Eficiencia: Conversión P ➔ V (Cierre)'),
+                            ratioSeries('S', 'P', '#ef4444', '% Eficiencia: Conversión P ➔ S (Solicitud)')
+                        ]
+                    },
+                    options: chartOpts('Tasa (0\u20131)')
+                });
+
+                // Prima promedio: $/V, $/S
+                destroyChart('primaRatios');
+                const ctxPR = document.getElementById('chartPrimaRatios').getContext('2d');
+                charts['primaRatios'] = new Chart(ctxPR, {
+                    type: 'line',
+                    data: {
+                        labels, datasets: [
+                            ratioSeries('prima', 'V', '#d4af37', '$/V — Prima por cierre'),
+                            ratioSeries('prima', 'S', '#10b981', '$/S — Prima por solicitud')
+                        ]
+                    },
+                    options: chartOpts('$ MXN')
+                });
+            }
+
+            // ─── KPI CHARTS ──────────────────────────────────────────────────────────────
+            function renderKPIs() {
+                const mesSel = document.getElementById('kpi-mes-sel').value;
+                let entries = state.entries.filter(e => !mesSel || e.mes === mesSel);
+
+                const agMap = {};
+                entries.forEach(e => {
+                    if (!agMap[e.agent]) agMap[e.agent] = { P: 0, E: 0, C: 0, V: 0, S: 0, prima: 0 };
+                    COLS.forEach(c => agMap[e.agent][c] += e.totales[c]);
+                    agMap[e.agent].prima += e.totales.prima;
+                });
+
+                const agents = Object.keys(agMap);
+                agents.sort((a, b) => agMap[b].prima - agMap[a].prima);
+
+                const labels = agents;
+                const primas = agents.map(a => agMap[a].prima);
+                const Vs = agents.map(a => agMap[a].V);
+                const Ps = agents.map(a => agMap[a].P);
+                const pvs = agents.map(a => agMap[a].P > 0 ? parseFloat((agMap[a].V / agMap[a].P).toFixed(2)) : 0);
+
+                destroyChart('kpiPrima');
+                charts['kpiPrima'] = new Chart(document.getElementById('kpiPrima').getContext('2d'), {
+                    type: 'bar',
+                    data: { labels, datasets: [{ label: 'Prima Neta ($)', data: primas, backgroundColor: CHART_COLORS.S }] },
+                    options: chartOpts('Monto $')
+                });
+
+                destroyChart('kpiVolumen');
+                charts['kpiVolumen'] = new Chart(document.getElementById('kpiVolumen').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels, datasets: [
+                            { label: 'Cierres (V)', data: Vs, backgroundColor: CHART_COLORS.V },
+                            { label: 'Contactos (P)', data: Ps, backgroundColor: CHART_COLORS.P }
+                        ]
+                    },
+                    options: chartOpts('Cantidad')
+                });
+
+                destroyChart('kpiEfectividad');
+                charts['kpiEfectividad'] = new Chart(document.getElementById('kpiEfectividad').getContext('2d'), {
+                    type: 'bar',
+                    data: { labels, datasets: [{ label: '% Eficiencia: Conversión de P ➔ V (Cierre)', data: pvs, backgroundColor: CHART_COLORS.C }] },
+                    options: chartOpts('Porcentaje (0.2 = 20%)')
+                });
+
+                // Prima Promedio / V
+                const pV = agents.map(a => agMap[a].V > 0 ? (agMap[a].prima / agMap[a].V).toFixed(2) : 0);
+                destroyChart('kpiPrimaV');
+                charts['kpiPrimaV'] = new Chart(document.getElementById('kpiPrimaV').getContext('2d'), {
+                    type: 'bar',
+                    data: { labels, datasets: [{ label: 'Prima Promedio por Cierre ($/V)', data: pV, backgroundColor: '#d4af37' }] },
+                    options: chartOpts('$ USD/MXN')
+                });
+
+                // Prima Promedio / S
+                const pS = agents.map(a => agMap[a].S > 0 ? (agMap[a].prima / agMap[a].S).toFixed(2) : 0);
+                destroyChart('kpiPrimaS');
+                charts['kpiPrimaS'] = new Chart(document.getElementById('kpiPrimaS').getContext('2d'), {
+                    type: 'bar',
+                    data: { labels, datasets: [{ label: 'Prima Promedio por Solicitud ($/S)', data: pS, backgroundColor: CHART_COLORS.S }] },
+                    options: chartOpts('$ USD/MXN')
+                });
+
+                // Volumen Full PECVS
+                const dataP = agents.map(a => agMap[a].P);
+                const dataE = agents.map(a => agMap[a].E);
+                const dataC = agents.map(a => agMap[a].C);
+                const dataV = agents.map(a => agMap[a].V);
+                const dataS = agents.map(a => agMap[a].S);
+                destroyChart('kpiVolumeFull');
+                charts['kpiVolumeFull'] = new Chart(document.getElementById('kpiVolumeFull').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [
+                            { label: 'P', data: dataP, backgroundColor: CHART_COLORS.P },
+                            { label: 'E', data: dataE, backgroundColor: CHART_COLORS.E },
+                            { label: 'C', data: dataC, backgroundColor: CHART_COLORS.C },
+                            { label: 'V', data: dataV, backgroundColor: CHART_COLORS.V },
+                            { label: 'S', data: dataS, backgroundColor: CHART_COLORS.S }
+                        ]
+                    },
+                    options: chartOpts('Cantidad Unidades')
+                });
+
+                // Ratios de Embudo
+                const ratios = [
+                    { id: 'kpiRatioEP', label: '% Eficiencia: Conversión de P ➔ E', top: 'E', bot: 'P', color: CHART_COLORS.E },
+                    { id: 'kpiRatioCE', label: '% Eficiencia: Conversión de E ➔ C', top: 'C', bot: 'E', color: CHART_COLORS.C },
+                    { id: 'kpiRatioVC', label: '% Eficiencia: Conversión de C ➔ V', top: 'V', bot: 'C', color: CHART_COLORS.V },
+                    { id: 'kpiRatioSV', label: '% Eficiencia: Conversión de V ➔ S', top: 'S', bot: 'V', color: CHART_COLORS.S }
+                ];
+
+                ratios.forEach(r => {
+                    const data = agents.map(a => agMap[a][r.bot] > 0 ? parseFloat((agMap[a][r.top] / agMap[a][r.bot]).toFixed(2)) : 0);
+                    destroyChart(r.id);
+                    charts[r.id] = new Chart(document.getElementById(r.id).getContext('2d'), {
+                        type: 'bar',
+                        data: { labels, datasets: [{ label: r.label, data: data, backgroundColor: r.color }] },
+                        options: chartOpts('Ratio (Tasa 0-1)')
+                    });
+                });
+            }
+
+            function chartOpts(yLabel) {
+                return {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+                        y: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } }, title: { display: true, text: yLabel, color: '#94a3b8', font: { size: 10 } } }
+                    }
+                };
+            }
+
+            // ─── EXPORT / IMPORT ─────────────────────────────────────────────────────────
+            function exportJSON() {
+                const errors = [];
+                state.entries.forEach(e => {
+                    e.dias.forEach(d => {
+                        const allZero = d.P === 0 && d.E === 0 && d.C === 0 && d.V === 0 && d.S === 0;
+                        if (allZero) return;
+
+                        const ok = d.P >= d.E && d.E >= d.C && d.C >= d.V && d.S >= d.V && d.S <= (d.V * 2) && (d.S > 0 ? d.prima >= 1 : true);
+                        if (!ok) {
+                            let razon = '';
+                            if (d.P < d.E) razon = 'Contactos < Entrevistas';
+                            else if (d.E < d.C) razon = 'Entrevistas < Cotizaciones';
+                            else if (d.C < d.V) razon = 'Cotizaciones < Cierres';
+                            else if (d.S < d.V) razon = 'Solicitudes < Cierres';
+                            else if (d.V === 0 && d.S > 0) razon = 'Si hay solicitudes, como mínimo tiene que haber 1 cierre';
+                            else if (d.S > d.V * 2) razon = 'Solicitudes > Doble de Cierres (Máx 2V)';
+                            else if (d.S > 0 && d.prima < 1) razon = 'Debe ingresar Prima ($) si hay solicitudes';
+                            errors.push(`🚩 [${e.agent}] ${e.mes} - Sem ${e.semana} (${d.dia}): Rompe jerarquía (${razon})`);
+                        }
+                    });
+                });
+
+                if (errors.length > 0) {
+                    if (!confirm(`¿Seguro que quieres guardar los cambios? Tienes estas inconsistencias en los registros de la bitácora:\n\n${errors.join('\n')}`)) {
+                        return;
+                    }
+                }
+
+                const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `pecvs_${(state.coachName || 'coach').replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.json`;
+                a.click();
+            }
+
+            function importJSON(event) {
+                const file = event.target.files[0]; if (!file) return;
+                const reader = new FileReader();
+                reader.onload = e => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (!data.entries || !Array.isArray(data.entries)) throw new Error('Formato inválido');
+
+                        // Check if it's an individual agent file
+                        const isInd = data.agentName && data.entries.every(en => en.agent === data.agentName);
+                        const sourceName = data.agentName || data.coachName || 'Desconocido';
+
+                        let mode = 'replace';
+                        if (isInd) {
+                            const choice = confirm(`Has seleccionado un reporte individual de: ${data.agentName}\n\nPresiona ACEPTAR para CONSOLIDAR/SUMAR sus datos a tu equipo actual.\nPresiona CANCELAR para REEMPLAZAR todo tu tablero con este archivo.`);
+                            mode = choice ? 'merge' : 'replace';
+                        } else {
+                            if (!confirm(`Importar datos de ${file.name} (Coach: ${sourceName})?\nEsto reemplazará todos tus datos actuales.`)) return;
+                        }
+
+                        if (mode === 'replace') {
+                            state = data;
+                        } else {
+                            // MERGE logic
+                            if (!state.agents.includes(data.agentName)) {
+                                state.agents.push(data.agentName);
+                            }
+                            // Merge entries: replace existing same (agent, mes, semana) with NEW one
+                            data.entries.forEach(newE => {
+                                const oldIdx = state.entries.findIndex(oldE =>
+                                    oldE.agent === newE.agent && oldE.mes === newE.mes && oldE.semana == newE.semana
+                                );
+                                if (oldIdx >= 0) state.entries[oldIdx] = newE;
+                                else state.entries.push(newE);
+                            });
+                            alert(`✅ Se consolidaron los datos de ${data.agentName} exitosamente.`);
+                        }
+
+                        saveState();
+                        refreshAll();
+                        if (state.entries && state.entries.length > 0) {
+                            loadEntryIntoForm(state.entries.length - 1);
+                        }
+                    } catch (err) { alert('Error al importar: ' + err.message); }
+                    event.target.value = '';
+                };
+                reader.readAsText(file);
+            }
+
+            // ─── REPORTE MENSUAL ──────────────────────────────────────────────────────────
+            function loadReporte(mesStr, coachName) {
+                const r = (state.reportes || []).find(r => r.mes === mesStr && r.coachName === coachName);
+                if (!r) return;
+
+                const view = document.getElementById('promotor-reporte-view');
+                view.innerHTML = `
+                <div style="background:rgba(255,255,255,0.03); padding:24px; border-radius:12px; border:1px solid var(--border);">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:10px;">
+                        <div>
+                            <h3 style="margin:0; color:var(--gold);">${r.mes}</h3>
+                            <p style="margin:5px 0 0; font-size:12px; color:var(--slate);">Coach: <strong>${r.coachName}</strong></p>
+                        </div>
+                        <div style="text-align:right">
+                            <p style="margin:0; font-size:11px; color:var(--slate);">Fecha de emisión:</p>
+                            <p style="margin:2px 0 0; font-size:12px;">${new Date(r.fecha).toLocaleString('es-MX')}</p>
+                        </div>
+                    </div>
+                    
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                        <div>
+                            <label class="field-label">Análisis General</label>
+                            <p style="font-size:14px; line-height:1.6; white-space:pre-wrap;">${r.analisis || 'Sin datos'}</p>
+                        </div>
+                        <div>
+                            <label class="field-label">Agentes y Desempeño</label>
+                            <p style="font-size:14px; line-height:1.6; white-space:pre-wrap;">${r.agentes || 'Sin datos'}</p>
+                        </div>
+                        <div>
+                            <label class="field-label">Compromisos</label>
+                            <p style="font-size:14px; line-height:1.6; white-space:pre-wrap;">${r.compromisos || 'Sin datos'}</p>
+                        </div>
+                        <div>
+                            <label class="field-label">Notas</label>
+                            <p style="font-size:14px; line-height:1.6; white-space:pre-wrap;">${r.notas || 'Sin datos'}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+                document.getElementById('modal-reporte-log').classList.remove('open');
+            }
+
+            function renderReporteHistory() {
+                const el = document.getElementById('rpt-history');
+                if (!el) return;
+                const list = state.reportes || [];
+                if (!list.length) { el.innerHTML = '<div class="empty-state"><i class="fa fa-inbox"></i>No hay reportes de coaches aún.</div>'; return; }
+                el.innerHTML = list.map(r => `
+                <div class="history-chip" onclick="loadReporte('${r.mes}', '${r.coachName}')" style="flex-direction:column; align-items:flex-start; padding:12px;">
+                    <div style="display:flex; justify-content:space-between; width:100%; margin-bottom:5px;">
+                        <span style="font-weight:700;color:var(--gold)">${r.mes}</span>
+                        <span style="color:var(--slate);font-size:10px;">${new Date(r.fecha).toLocaleDateString('es-MX')}</span>
+                    </div>
+                    <span style="color:var(--white);font-size:11px;">Coach: ${r.coachName}</span>
+                </div>`).join('');
+            }
+
+            // ─── BOOT ─────────────────────────────────────────────────────────────────────
+            window.addEventListener('beforeunload', function (e) {
+                if (state.entries && state.entries.length > 0) {
+                    e.preventDefault();
+                    e.returnValue = '¿Descargaste tu archivo JSON? Los cambios recientes se perderán si cierras sin exportar el archivo.';
+                }
+            });
+
+            window.refreshAll = refreshAll;
+            window.switchTab = switchTab;
+            window.toggleRed = toggleRed;
+            window.renderCharts = renderCharts;
+            window.renderKPIs = renderKPIs;
+            window.renderLeaderboard = renderLeaderboard;
+            window.loadReporte = loadReporte;
+            window.renderReporteHistory = renderReporteHistory;
+            window.saveConfigPromotor = saveConfigPromotor;
+            window.openConfig = openConfig;
+            window.closeConfig = closeConfig;
+            window.ratio = ratio;
+            window.destroyChart = destroyChart;
+            window.chartOpts = chartOpts;
+            window.removeAgent = removeAgent;
+            window.validateDay = validateDay;
+            window.ratio = ratio;
+            window.destroyChart = destroyChart;
+            window.chartOpts = chartOpts;
+        </script>
+</body>
+
+</html>
