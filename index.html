@@ -598,6 +598,12 @@
                             <option value="5">Semana 5</option>
                         </select>
                     </div>
+                    <div>
+                        <label class="field-label">Equipo Coach</label>
+                        <select id="lb-team-filter" onchange="renderLeaderboard()">
+                            <option value="">Todos los equipos</option>
+                        </select>
+                    </div>
                     <div style="margin-top:18px;">
                         <button class="btn btn-sm"
                             onclick="document.getElementById('lb-mes-filter').value='';document.getElementById('lb-sem-filter').value='';renderLeaderboard()"><i
@@ -632,6 +638,12 @@
                             <option value="">Todos los meses</option>
                         </select>
                     </div>
+                    <div>
+                        <label class="field-label">Equipo Coach</label>
+                        <select id="kpi-team-sel" onchange="renderKPIs()">
+                            <option value="">Todos los equipos</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="charts-grid">
                     <div class="chart-card full">
@@ -663,9 +675,15 @@
             <div class="card">
                 <div class="charts-controls">
                     <div>
+                        <label class="field-label">Equipo Coach</label>
+                        <select id="chart-team-sel" onchange="refreshAgentSelects(); renderCharts()">
+                            <option value="">Todos los equipos</option>
+                        </select>
+                    </div>
+                    <div>
                         <label class="field-label">Agente</label>
                         <select id="chart-agent-sel" onchange="renderCharts()">
-                            <option value="__all__">Todos (Total equipo)</option>
+                            <option value="__all__">Todos los agentes</option>
                         </select>
                     </div>
                     <div>
@@ -704,7 +722,15 @@
         <div id="tab-reporte" class="tab-panel">
             <div class="card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                    <p class="card-title"><i class="fa fa-file-contract"></i> Reportes Mensuales de Coaches</p>
+                    <div style="display:flex; gap:14px; align-items:center;">
+                        <p class="card-title" style="margin:0;"><i class="fa fa-file-contract"></i> Reportes Coaches</p>
+                        <div style="min-width:200px;">
+                            <select id="rpt-team-sel" onchange="renderReporteHistory()"
+                                style="padding:6px 10px; font-size:11px;">
+                                <option value="">Todos los equipos</option>
+                            </select>
+                        </div>
+                    </div>
                     <button class="btn btn-sm"
                         onclick="document.getElementById('modal-reporte-log').classList.add('open')">
                         <i class="fa fa-list"></i> Ver Historial de Reportes
@@ -780,7 +806,7 @@
             const COLS = ['P', 'E', 'C', 'V', 'S'];
             const MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-            let state = { promotorName: '', promotorCode: '', coaches: [], teamCodes: [], agents: [], entries: [], reportes: [] };
+            let state = { promotorName: '', promotorCode: '', coaches: [], teamCodes: [], coachMap: {}, agents: [], entries: [], reportes: [] };
             let user = null;
             let unsubCoaches = null;
             let unsubAgents = null;
@@ -837,15 +863,20 @@
                 unsubCoaches = onSnapshot(q, (snapshot) => {
                     const allCoaches = [];
                     const allTeamCodes = [];
+                    const coachMap = {};
                     const allAggregatedReportes = [];
 
                     snapshot.forEach((doc) => {
                         const coachData = doc.data();
-                        allCoaches.push(coachData.coachName || 'Sin Nombre');
-                        if (coachData.teamCode) allTeamCodes.push(coachData.teamCode);
+                        const cName = coachData.coachName || 'Sin Nombre';
+                        allCoaches.push(cName);
+                        if (coachData.teamCode) {
+                            allTeamCodes.push(coachData.teamCode);
+                            coachMap[coachData.teamCode] = cName;
+                        }
                         if (coachData.reportes) {
                             coachData.reportes.forEach(r => {
-                                r.coachName = coachData.coachName;
+                                r.coachName = cName;
                                 allAggregatedReportes.push(r);
                             });
                         }
@@ -853,9 +884,11 @@
 
                     state.coaches = allCoaches;
                     state.teamCodes = allTeamCodes;
+                    state.coachMap = coachMap;
                     state.reportes = allAggregatedReportes;
 
                     renderCoachList();
+                    refreshTeamSelects();
                     startListeningAgents();
                 });
             }
@@ -876,10 +909,11 @@
                     snapshot.forEach((doc) => {
                         const agentData = doc.data();
                         if (agentData.agentName) {
-                            allAgents.push(agentData.agentName);
+                            allAgents.push({ name: agentData.agentName, teamCode: agentData.teamCode });
                             if (agentData.entries) {
                                 agentData.entries.forEach(e => {
                                     e.agent = agentData.agentName;
+                                    e.teamCode = agentData.teamCode;
                                     allEntries.push(e);
                                 });
                             }
@@ -894,6 +928,7 @@
             function refreshAll() {
                 document.getElementById('promotor-display').textContent = 'Promotor: ' + (state.promotorName || '—');
                 document.getElementById('promocode-display').textContent = 'Código: ' + (state.promotorCode || '—');
+                refreshTeamSelects();
                 refreshAgentSelects();
                 renderLeaderboard();
                 renderCharts();
@@ -943,13 +978,29 @@
                 el.innerHTML = state.coaches.map(c => `<div class="agent-chip"><span><i class="fa fa-user-tie" style="margin-right:8px; color:var(--gold)"></i>${c}</span></div>`).join('');
             }
 
+            function refreshTeamSelects() {
+                const ids = ['lb-team-filter', 'kpi-team-sel', 'chart-team-sel', 'rpt-team-sel'];
+                const opts = Object.entries(state.coachMap).map(([code, name]) => `<option value="${code}">${name}</option>`).join('');
+                ids.forEach(id => {
+                    const el = document.getElementById(id); if (!el) return;
+                    const cur = el.value;
+                    el.innerHTML = '<option value="">Todos los equipos</option>' + opts;
+                    el.value = cur;
+                });
+            }
+
             function refreshAgentSelects() {
-                const opts = state.agents.map(a => `<option value="${a}">${a}</option>`).join('');
+                const teamF = document.getElementById('chart-team-sel').value;
+                let filteredAgents = state.agents;
+                if (teamF) filteredAgents = state.agents.filter(a => a.teamCode === teamF);
+
+                const opts = filteredAgents.map(a => `<option value="${a.name}">${a.name}</option>`).join('');
                 const sel = document.getElementById('chart-agent-sel');
                 if (sel) {
                     const cur = sel.value;
-                    sel.innerHTML = '<option value="__all__">Todos (Total equipo)</option>' + opts;
-                    sel.value = cur;
+                    sel.innerHTML = '<option value="__all__">Todos los agentes</option>' + opts;
+                    if (filteredAgents.find(a => a.name === cur) || cur === '__all__') sel.value = cur;
+                    else sel.value = '__all__';
                 }
             }
 
@@ -990,7 +1041,8 @@
             function renderLeaderboard() {
                 const mesF = document.getElementById('lb-mes-filter').value;
                 const semF = document.getElementById('lb-sem-filter').value;
-                let filtered = state.entries.filter(e => (!mesF || e.mes === mesF) && (!semF || e.semana == semF));
+                const teamF = document.getElementById('lb-team-filter').value;
+                let filtered = state.entries.filter(e => (!mesF || e.mes === mesF) && (!semF || e.semana == semF) && (!teamF || e.teamCode === teamF));
 
                 const agMap = {};
                 filtered.forEach(e => {
@@ -1078,7 +1130,8 @@
             function renderCharts() {
                 const agSel = document.getElementById('chart-agent-sel').value;
                 const mesSel = document.getElementById('chart-mes-sel').value;
-                let entries = state.entries.filter(e => (agSel === '__all__' || e.agent === agSel) && (!mesSel || e.mes === mesSel));
+                const teamSel = document.getElementById('chart-team-sel').value;
+                let entries = state.entries.filter(e => (agSel === '__all__' || e.agent === agSel) && (!mesSel || e.mes === mesSel) && (!teamSel || e.teamCode === teamSel));
                 const labelSet = [...new Set(entries.map(e => `${e.mes}·S${e.semana}`))].sort();
 
                 function aggByLabel(col) {
@@ -1144,7 +1197,8 @@
 
             function renderKPIs() {
                 const mesSel = document.getElementById('kpi-mes-sel').value;
-                let entries = state.entries.filter(e => !mesSel || e.mes === mesSel);
+                const teamSel = document.getElementById('kpi-team-sel').value;
+                let entries = state.entries.filter(e => (!mesSel || e.mes === mesSel) && (!teamSel || e.teamCode === teamSel));
                 const agMap = {};
                 entries.forEach(e => {
                     if (!agMap[e.agent]) agMap[e.agent] = { P: 0, E: 0, C: 0, V: 0, S: 0, prima: 0 };
@@ -1204,7 +1258,12 @@
 
             function renderReporteHistory() {
                 const el = document.getElementById('rpt-history'); if (!el) return;
-                const list = state.reportes || [];
+                const teamF = document.getElementById('rpt-team-sel').value;
+                const coachF = state.coachMap[teamF];
+
+                let list = state.reportes || [];
+                if (coachF) list = list.filter(r => r.coachName === coachF);
+
                 if (!list.length) { el.innerHTML = '<div class="empty-state">No hay reportes.</div>'; return; }
                 el.innerHTML = list.map(r => `
                 <div class="history-chip" onclick="loadReporte('${r.mes}', '${r.coachName}')" style="flex-direction:column; align-items:flex-start; padding:12px;">
