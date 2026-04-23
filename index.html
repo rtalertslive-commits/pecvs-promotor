@@ -773,6 +773,12 @@
                             deben ingresar en su app para que puedas ver sus datos.</p>
                     </div>
                     <div>
+                        <label class="field-label">Código de Director</label>
+                        <input type="text" id="inp-dircode" placeholder="Ej. DIR-NORTH-1">
+                        <p style="font-size:10px; color:var(--slate); margin-top:5px;">Ingresa el código que te dio tu
+                            director para compartirle tus datos.</p>
+                    </div>
+                    <div>
                         <p class="section-label">Coaches Vinculados</p>
                         <div class="agent-list" id="coach-list"></div>
                     </div>
@@ -806,7 +812,7 @@
             const COLS = ['P', 'E', 'C', 'V', 'S'];
             const MONTHS_ES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-            let state = { promotorName: '', promotorCode: '', coaches: [], teamCodes: [], coachMap: {}, agents: [], entries: [], reportes: [] };
+            let state = { promotorName: '', promotorCode: '', directorCode: '', coaches: [], teamCodes: [], coachMap: {}, agents: [], entries: [], reportes: [] };
             let user = null;
             let unsubCoaches = null;
             let unsubAgents = null;
@@ -839,6 +845,7 @@
                     const data = docSnap.data();
                     state.promotorName = data.promotorName || '';
                     state.promotorCode = data.promotorCode || '';
+                    state.directorCode = data.directorCode || '';
                     refreshAll();
                     startListeningCoaches();
                 } else {
@@ -851,7 +858,8 @@
                 if (!user) return;
                 await setDoc(doc(db, "promotores", user.email), {
                     promotorName: state.promotorName,
-                    promotorCode: state.promotorCode
+                    promotorCode: state.promotorCode,
+                    directorCode: state.directorCode
                 });
             }
 
@@ -951,6 +959,7 @@
             function openConfig() {
                 document.getElementById('inp-promotor').value = state.promotorName || '';
                 document.getElementById('inp-promocode').value = state.promotorCode || '';
+                document.getElementById('inp-dircode').value = state.directorCode || '';
                 renderCoachList();
                 document.getElementById('config-modal').classList.add('open');
             }
@@ -960,10 +969,12 @@
             async function saveConfigPromotor() {
                 const name = document.getElementById('inp-promotor').value.trim();
                 const code = document.getElementById('inp-promocode').value.trim().toUpperCase();
+                const dCode = document.getElementById('inp-dircode').value.trim().toUpperCase();
                 if (!name || !code) return alert("Por favor ingresa nombre y código.");
 
                 state.promotorName = name;
                 state.promotorCode = code;
+                state.directorCode = dCode;
                 await savePromotorData();
                 alert("Configuración guardada.");
                 closeConfig();
