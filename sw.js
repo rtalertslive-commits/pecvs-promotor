@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pecvs-promotor-v1.0.0';
+const CACHE_NAME = 'pecvs-coach-v1.3.6';
 const assets = ['./', './index.html'];
 
 self.addEventListener('install', e => {
