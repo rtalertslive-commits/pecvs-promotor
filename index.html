@@ -1068,7 +1068,7 @@
                 </div>
                 <div>
                     <label class="field-label">Tu Código de Promotor (compártelo con tus coaches)</label>
-                    <input type="text" id="inp-teamcode" placeholder="Ej. TEAM-PROMOTOR-1" readonly>
+                    <input type="text" id="inp-teamcode" placeholder="Ej. TEAM-PROMOTOR-1">
                     <p style="font-size:10px; color:var(--slate); margin-top:5px;">Los coaches ingresan este código en su webapp para vincularse a ti.</p>
                 </div>
                 <div>
@@ -1434,7 +1434,7 @@
 
                 state.promoterName = document.getElementById('inp-coach').value.trim();
                 state.directorCode = document.getElementById('inp-directorcode').value.trim();
-                // promotorCode is read-only (loaded from promoter doc)
+                state.promotorCode = document.getElementById('inp-teamcode').value.trim();
 
                 await saveState();
                 startListeningCoaches();
