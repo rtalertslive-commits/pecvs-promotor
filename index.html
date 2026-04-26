@@ -812,6 +812,7 @@
 
         <!-- TAB NAV -->
         <div class="tab-nav">
+            <button class="tab-btn" onclick="switchTab('bitacora',this)"><i class="fa fa-book-open"></i> Bitácora</button>
             <button class="tab-btn active" onclick="switchTab('leaderboard',this)"><i class="fa fa-table"></i> Leaderboard /
                 Ratios</button>
             <button class="tab-btn" onclick="switchTab('kpis',this)"><i class="fa fa-chart-column"></i>
@@ -819,6 +820,7 @@
             <button class="tab-btn" onclick="switchTab('charts',this)"><i class="fa fa-chart-area"></i>
                 Tendencias</button>
             <button class="tab-btn" onclick="switchTab('reporte',this)"><i class="fa fa-file-lines"></i> Reportes de Coaches</button>
+            <button class="tab-btn" onclick="switchTab('mi-reporte',this)"><i class="fa fa-clipboard-list"></i> Mi Reporte</button>
         </div>
 
         <!-- ═══════════════════════════════ TAB: LEADERBOARD ═══════════════════════════════ -->
@@ -1029,31 +1031,283 @@
 
         <!-- ═══════════════════ TAB: REPORTES DE COACHES ═══════════════════ -->
         <div id="tab-reporte" class="tab-panel">
-            <div class="card">
-                <p class="card-title"><i class="fa fa-file-lines"></i> Reportes de Coaches</p>
-                <p style="font-size:12px;color:var(--slate);margin-bottom:15px;">
-                    Visualiza los reportes mensuales enviados por los coaches de tu equipo, incluyendo análisis, fraude, compromisos y reclutamiento.
-                </p>
-                <div class="charts-controls" style="margin-bottom:20px;">
-                    <div>
-                        <label class="field-label">Equipo Coach</label>
-                        <select id="rpt-coach-filter" onchange="renderCoachReportes()">
-                            <option value="">Todos los coaches</option>
-                        </select>
+            <!-- Sub-tab switcher -->
+            <div style="display:flex; gap:8px; margin-bottom:20px;">
+                <button id="rpt-sub-btn-ventas" onclick="switchReporteSub('ventas')" style="padding:8px 18px; border-radius:8px; border:none; background:var(--gold); color:#000; font-weight:700; font-size:13px; cursor:pointer;">📊 Reportes de Ventas</button>
+                <button id="rpt-sub-btn-reclutamiento" onclick="switchReporteSub('reclutamiento')" style="padding:8px 18px; border-radius:8px; border:none; background:rgba(255,255,255,0.08); color:var(--white); font-weight:600; font-size:13px; cursor:pointer;">👥 Reclutamiento 2026</button>
+            </div>
+
+            <!-- VENTAS SECTION -->
+            <div id="rpt-section-ventas">
+                <div class="card">
+                    <p class="card-title"><i class="fa fa-chart-line"></i> Reportes de Ventas</p>
+                    <p style="font-size:12px;color:var(--slate);margin-bottom:15px;">Análisis mensual, sospecha de fraude, compromisos y notas de cada coach.</p>
+                    <div class="charts-controls" style="margin-bottom:20px;">
+                        <div>
+                            <label class="field-label">Equipo Coach</label>
+                            <select id="rpt-coach-filter" onchange="renderCoachReportes()">
+                                <option value="">Todos los coaches</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="field-label">Mes</label>
+                            <select id="rpt-mes-filter" onchange="renderVentasSection()">
+                                <option value="">Todos los meses</option>
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <label class="field-label">Mes</label>
-                        <select id="rpt-mes-filter" onchange="renderCoachReportes()">
-                            <option value="">Todos los meses</option>
-                        </select>
+                    <div id="coach-reportes-list" style="display:flex;flex-direction:column;gap:16px;">
+                        <div class="empty-state"><i class="fa fa-inbox"></i>Cargando reportes...</div>
                     </div>
                 </div>
-                <div id="coach-reportes-list" style="display:flex;flex-direction:column;gap:16px;">
-                    <div class="empty-state"><i class="fa fa-inbox"></i>Cargando reportes...</div>
+            </div>
+
+            <!-- RECLUTAMIENTO SECTION -->
+            <div id="rpt-section-reclutamiento" style="display:none;">
+                <div class="card">
+                    <p class="card-title"><i class="fa fa-user-plus"></i> Reclutamiento</p>
+                    <p style="font-size:12px;color:var(--slate);margin-bottom:15px;">Seguimiento mensual de reclutamiento por coach. <span style="color:var(--green);font-weight:600;">Verde = Sí</span> · <span style="color:var(--red);font-weight:600;">Rojo = No</span> · Gris = Mes pendiente</p>
+                    <div class="charts-controls" style="margin-bottom:20px;">
+                        <div>
+                            <label class="field-label">Equipo Coach</label>
+                            <select id="recl-coach-filter" onchange="renderReclutamientoSection()">
+                                <option value="">Todos los coaches</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="field-label">Año</label>
+                            <select id="recl-year-filter" onchange="renderReclutamientoSection()">
+                                <option value="">Todos los años</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="reclutamiento-grid" style="display:flex;flex-direction:column;gap:16px;">
+                        <div class="empty-state"><i class="fa fa-inbox"></i>Cargando...</div>
+                    </div>
                 </div>
             </div>
         </div>
 
+        <!-- ═══════════════════ TAB: BITÁCORA ═══════════════════ -->
+        <div id="tab-bitacora" class="tab-panel">
+            <div class="card">
+                <p class="card-title"><i class="fa fa-book-open"></i> Bitácora de Agentes <span style="font-size:12px;font-weight:400;color:var(--slate);">(solo lectura, para efectos de supervisión)</span></p>
+                <div class="info-box">
+                    <strong>Embudo PECVS$:</strong> P ≥ E ≥ C ≥ V &nbsp;|&nbsp;
+                    P=Contactos · E=Entrevistas · C=Cotizaciones · V=Cierres · S=Solicitudes · $=Prima Neta
+                </div>
+                <div class="bitacora-header">
+                    <div>
+                        <label class="field-label">Coach</label>
+                        <select id="bit-coach-filter" onchange="refreshBitAgentSelect()">
+                            <option value="">— Todos los coaches —</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="field-label">Agente</label>
+                        <select id="bit-agent" onchange="autoLoadBit()">
+                            <option value="">— Selecciona agente —</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="field-label">Mes</label>
+                        <select id="bit-month" onchange="updateBitCalendar()">
+                            <option value="1">Enero</option><option value="2">Febrero</option>
+                            <option value="3">Marzo</option><option value="4" selected>Abril</option>
+                            <option value="5">Mayo</option><option value="6">Junio</option>
+                            <option value="7">Julio</option><option value="8">Agosto</option>
+                            <option value="9">Septiembre</option><option value="10">Octubre</option>
+                            <option value="11">Noviembre</option><option value="12">Diciembre</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="field-label">Año</label>
+                        <input type="number" id="bit-year" value="2026" min="2020" max="2040" onchange="updateBitCalendar()" style="width:100px;">
+                    </div>
+                    <div>
+                        <label class="field-label">Semana</label>
+                        <select id="bit-semana" onchange="autoLoadBit()"></select>
+                    </div>
+                </div>
+                <div id="bit-week-info" style="font-size:11px;color:var(--teal);margin-bottom:10px;"></div>
+                <table class="week-table">
+                    <thead>
+                        <tr>
+                            <th>Día</th>
+                            <th>P — Contactos</th><th>E — Entrevistas</th><th>C — Cotizaciones</th>
+                            <th>V — Cierres</th><th>S — Solicitudes</th><th>$ — Prima Neta</th><th>Semáforo</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bit-week-body"></tbody>
+                    <tfoot>
+                        <tr>
+                            <td class="day-label">TOTAL SEM</td>
+                            <td class="total-cell" id="bit-tt-P">0</td>
+                            <td class="total-cell" id="bit-tt-E">0</td>
+                            <td class="total-cell" id="bit-tt-C">0</td>
+                            <td class="total-cell" id="bit-tt-V">0</td>
+                            <td class="total-cell" id="bit-tt-S">0</td>
+                            <td class="total-cell" id="bit-tt-$">$0</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td class="day-label">TOTAL MES</td>
+                            <td class="total-cell" id="bit-ttm-P">0</td>
+                            <td class="total-cell" id="bit-ttm-E">0</td>
+                            <td class="total-cell" id="bit-ttm-C">0</td>
+                            <td class="total-cell" id="bit-ttm-V">0</td>
+                            <td class="total-cell" id="bit-ttm-S">0</td>
+                            <td class="total-cell" id="bit-ttm-$">$0</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+                <div class="save-row" style="justify-content:flex-end;">
+                    <button class="btn btn-sm" onclick="renderBitHistory();document.getElementById('modal-bit-log').classList.add('open')">
+                        <i class="fa fa-list"></i> Ver log (todos los registros)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════ TAB: MI REPORTE ═══════════════════ -->
+        <div id="tab-mi-reporte" class="tab-panel">
+
+            <!-- Selector de mes/año -->
+            <div class="card" style="margin-bottom:20px;">
+                <p class="card-title"><i class="fa fa-calendar-check"></i> Reporte Mensual del Promotor</p>
+                <p style="font-size:12px;color:var(--slate);margin-bottom:16px;">Selecciona el mes y completa ambas secciones antes de guardar.</p>
+                <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+                    <div>
+                        <label class="field-label">Mes</label>
+                        <select id="prpt-mes" onchange="tryLoadPromoterReporte()" style="min-width:130px;">
+                            <option value="">------</option>
+                            <option>Enero</option><option>Febrero</option><option>Marzo</option>
+                            <option>Abril</option><option>Mayo</option><option>Junio</option>
+                            <option>Julio</option><option>Agosto</option><option>Septiembre</option>
+                            <option>Octubre</option><option>Noviembre</option><option>Diciembre</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="field-label">Año</label>
+                        <select id="prpt-year" onchange="tryLoadPromoterReporte()" style="width:90px;">
+                            <option value="">----</option>
+                            <option>2026</option><option>2027</option><option>2028</option>
+                            <option>2029</option><option>2030</option><option>2031</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-green" onclick="savePromoterReporte()" style="margin-bottom:2px;">
+                        <i class="fa fa-floppy-disk"></i> Guardar reporte
+                    </button>
+                    <span id="prpt-msg" style="font-size:12px;color:var(--green);display:none;align-items:center;gap:6px;"><i class="fa fa-check"></i> Guardado</span>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 1: RECLUTAMIENTO -->
+            <div class="card" style="margin-bottom:20px;">
+                <p class="card-title"><i class="fa fa-people-group"></i> Reclutamiento</p>
+                <div style="margin-bottom:20px;">
+                    <label class="field-label">¿Actualmente tienes en entrenamiento algún prospecto a agente que todavía no tenga clave?</label>
+                    <div style="display:flex;gap:10px;margin-top:10px;">
+                        <button class="btn btn-sm" onclick="handlePromoterReclQ1('si')" id="pBtn-recl-si" style="flex:1;">Sí</button>
+                        <button class="btn btn-sm" onclick="handlePromoterReclQ1('no')" id="pBtn-recl-no" style="flex:1;">Todavía no</button>
+                    </div>
+                </div>
+                <div id="precl-q2" style="display:none;margin-bottom:16px;">
+                    <label class="field-label">¿Cuántos tienes a tu cargo?</label>
+                    <input type="number" id="precl-cantidad" min="0" max="20" placeholder="Cantidad de prospectos" style="width:100%;">
+                </div>
+                <div id="precl-q3" style="display:none;margin-bottom:16px;">
+                    <label class="field-label">¿Cómo se llaman?</label>
+                    <textarea id="precl-nombres" rows="3" placeholder="Nombres separados por comas..."></textarea>
+                </div>
+                <div id="precl-q4" style="display:none;margin-bottom:16px;">
+                    <label class="field-label">¿Para cuándo los puedes formalizar como agentes con clave?</label>
+                    <textarea id="precl-compromiso" rows="2" placeholder="Describe tu compromiso..."></textarea>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 2: VENTA DE CARRERA DE COACH -->
+            <div class="card">
+                <p class="card-title"><i class="fa fa-user-graduate"></i> Venta de Carrera de Coach</p>
+                <div style="margin-bottom:20px;">
+                    <label class="field-label">¿Tienes en mente a un agente para coach?</label>
+                    <div style="display:flex;gap:10px;margin-top:10px;">
+                        <button class="btn btn-sm" onclick="handlePromoterVentaQ1('si')" id="pBtn-venta-si" style="flex:1;">Sí</button>
+                        <button class="btn btn-sm" onclick="handlePromoterVentaQ1('no')" id="pBtn-venta-no" style="flex:1;">Todavía no</button>
+                    </div>
+                </div>
+                <div id="pventa-q2" style="display:none;margin-bottom:16px;">
+                    <label class="field-label">¿Cuál es su nombre?</label>
+                    <input type="text" id="pventa-nombre" placeholder="Nombre del agente...">
+                </div>
+                <div id="pventa-q3" style="display:none;margin-bottom:16px;">
+                    <label class="field-label">¿Para cuándo crees que lo puedes formalizar como coach?</label>
+                    <textarea id="pventa-cuando" rows="2" placeholder="Ej. Para marzo 2026..."></textarea>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- RECL DETAIL MODAL -->
+    <div class="modal-overlay" id="recl-detail-modal">
+        <div class="modal-box" style="max-width:480px;">
+            <button class="modal-close" onclick="closeReclDetail()">&times;</button>
+            <h2 style="font-family:'Playfair Display',serif; color:var(--green); margin-top:0; font-size:20px;">
+                <i class="fa fa-user-plus"></i> Reclutamiento
+            </h2>
+            <div id="recl-detail-header" style="font-size:12px; color:var(--slate); margin-bottom:16px;"></div>
+            <div id="recl-detail-content" style="display:flex; flex-direction:column; gap:12px; font-size:14px; line-height:1.6;"></div>
+            <button class="btn btn-sm" style="margin-top:20px; width:100%;" onclick="closeReclDetail()">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- REGISTER OVERLAY -->
+    <div id="register-overlay" style="display:none; position:fixed; inset:0; background:radial-gradient(circle at top right,#1e293b,#0f172a); z-index:10001; align-items:center; justify-content:center; flex-direction:column; padding:20px;">
+        <div class="login-card" style="max-width:420px;">
+            <div style="font-size:40px; margin-bottom:16px;">📝</div>
+            <h2 style="color:var(--gold); font-family:'Playfair Display',serif; margin-bottom:8px;">Solicitar Acceso</h2>
+            <p style="color:var(--slate); font-size:13px; margin-bottom:24px;">Tu cuenta de Google no está registrada. Ingresa tus datos para solicitar acceso al sistema.</p>
+            <div style="text-align:left; display:flex; flex-direction:column; gap:14px; margin-bottom:20px;">
+                <div>
+                    <label style="font-size:11px; color:var(--slate); font-weight:700; display:block; margin-bottom:6px;">TU NOMBRE COMPLETO</label>
+                    <input type="text" id="reg-name" placeholder="Ej. María García" style="width:100%;">
+                </div>
+                <div>
+                    <label style="font-size:11px; color:var(--slate); font-weight:700; display:block; margin-bottom:6px;">TU CLAVE DE AGENTE (4 dígitos)</label>
+                    <input type="text" id="reg-code" placeholder="Ej. 1234" maxlength="4" inputmode="numeric" style="width:100%; letter-spacing:6px; font-size:18px; font-weight:700; text-align:center;">
+                </div>
+            </div>
+            <div style="background:rgba(212,175,55,0.1); border:1px solid rgba(212,175,55,0.3); border-radius:8px; padding:12px; font-size:12px; color:var(--gold-l); margin-bottom:20px; text-align:left; line-height:1.6;">
+                <i class="fa fa-circle-info"></i> Tu solicitud será revisada por el director, quien te asignará tu rol y equipo.
+            </div>
+            <button id="reg-submit-btn" onclick="submitRegistration()" style="width:100%; padding:13px; border-radius:10px; background:var(--green); color:#fff; border:none; font-size:14px; font-weight:700; cursor:pointer;">
+                <i class="fa fa-paper-plane"></i> Enviar Solicitud de Acceso
+            </button>
+            <button onclick="doSignOut()" style="width:100%; margin-top:10px; padding:10px; border-radius:10px; background:none; border:1px solid rgba(255,255,255,0.15); color:var(--slate); font-size:13px; cursor:pointer;">Salir</button>
+        </div>
+    </div>
+
+    <!-- PENDING OVERLAY -->
+    <div id="pending-overlay" style="display:none; position:fixed; inset:0; background:radial-gradient(circle at top right,#1e293b,#0f172a); z-index:10001; align-items:center; justify-content:center; flex-direction:column; padding:20px;">
+        <div class="login-card" style="max-width:400px;">
+            <div style="font-size:50px; margin-bottom:16px;">⏳</div>
+            <h2 style="color:var(--orange); font-family:'Playfair Display',serif; margin-bottom:8px;">Solicitud Pendiente</h2>
+            <p style="color:var(--slate); font-size:13px; margin-bottom:20px;">Tu solicitud de acceso está pendiente de aprobación por el director. Por favor intenta más tarde.</p>
+            <button onclick="doSignOut()" style="width:100%; padding:12px; border-radius:10px; background:none; border:1px solid rgba(255,255,255,0.15); color:var(--slate); font-size:13px; cursor:pointer;">Salir</button>
+        </div>
+    </div>
+
+    <!-- REVOKED OVERLAY -->
+    <div id="revoked-overlay" style="display:none; position:fixed; inset:0; background:radial-gradient(circle at top right,#1e293b,#0f172a); z-index:10001; align-items:center; justify-content:center; flex-direction:column; padding:20px;">
+        <div class="login-card" style="max-width:400px;">
+            <div style="font-size:50px; margin-bottom:16px;">🚫</div>
+            <h2 style="color:var(--red); font-family:'Playfair Display',serif; margin-bottom:8px;">Acceso Revocado</h2>
+            <p style="color:var(--slate); font-size:13px; margin-bottom:20px;">Tu acceso al sistema ha sido revocado. Contacta al director si crees que es un error.</p>
+            <button onclick="doSignOut()" style="width:100%; padding:12px; border-radius:10px; background:none; border:1px solid rgba(255,255,255,0.15); color:var(--slate); font-size:13px; cursor:pointer;">Salir</button>
+        </div>
     </div>
 
     <!-- CONFIG MODAL -->
@@ -1066,24 +1320,28 @@
                     <label class="field-label">Nombre del Promotor</label>
                     <input type="text" id="inp-coach" placeholder="Tu nombre">
                 </div>
-                <div>
-                    <label class="field-label">Tu Código de Promotor (compártelo con tus coaches)</label>
-                    <input type="text" id="inp-teamcode" placeholder="Ej. TEAM-PROMOTOR-1">
-                    <p style="font-size:10px; color:var(--slate); margin-top:5px;">Los coaches ingresan este código en su webapp para vincularse a ti.</p>
-                </div>
-                <div>
-                    <label class="field-label">Código de tu Director</label>
-                    <input type="text" id="inp-directorcode" placeholder="Ej. TEAM-DIRECTOR">
-                    <p style="font-size:10px; color:var(--slate); margin-top:5px;">Ingresa el código de tu director para que pueda verte en su dashboard.</p>
+                <div style="background:rgba(212,175,55,0.07); border:1px solid rgba(212,175,55,0.2); border-radius:10px; padding:12px 14px;">
+                    <label class="field-label" style="margin-bottom:6px; display:block;">MI CLAVE DE PROMOTOR</label>
+                    <span id="disp-mycode" style="font-size:22px; font-weight:800; color:var(--gold); letter-spacing:6px;">—</span>
+                    <p style="font-size:10px; color:var(--slate); margin:4px 0 0;">Asignada por el director. Tus coaches se vinculan automáticamente con esta clave.</p>
                 </div>
                 <div>
                     <p class="section-label">Coaches en tu Equipo</p>
                     <div class="agent-list" id="agent-list"></div>
-                    <p style="font-size:10px; color:var(--slate); margin-top:5px;">Los coaches que ingresen tu código
-                        aparecerán aquí automáticamente.</p>
                 </div>
                 <button class="btn btn-green" onclick="saveConfig()"><i class="fa fa-floppy-disk"></i>Guardar
                     configuración</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BITÁCORA LOG MODAL -->
+    <div class="modal-overlay" id="modal-bit-log">
+        <div class="modal-box" style="max-width:600px;">
+            <button class="modal-close" onclick="document.getElementById('modal-bit-log').classList.remove('open')">&times;</button>
+            <h2><i class="fa fa-clock-rotate-left"></i> Log de Transacciones (Bitácora)</h2>
+            <div id="bit-history-grid" style="display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto;">
+                <div class="empty-state"><i class="fa fa-inbox"></i> No hay entradas.</div>
             </div>
         </div>
     </div>
@@ -1141,17 +1399,75 @@
             if (confirm("¿Cerrar sesión?")) signOut(auth);
         };
 
+        window.doSignOut = function () {
+            signOut(auth).then(() => location.reload());
+        };
+
         onAuthStateChanged(auth, async (u) => {
             if (u) {
                 user = u;
-                document.getElementById('login-overlay').classList.add('hidden');
-                await loadPromoterData();
-                init();
+                const status = await checkUserStatus();
+                if (status === 'active') {
+                    document.getElementById('login-overlay').classList.add('hidden');
+                    await loadPromoterData();
+                    init();
+                } else if (status === 'inactive') {
+                    document.getElementById('login-overlay').classList.add('hidden');
+                    document.getElementById('revoked-overlay').style.display = 'flex';
+                } else if (status === 'pending') {
+                    document.getElementById('login-overlay').classList.add('hidden');
+                    document.getElementById('pending-overlay').style.display = 'flex';
+                } else {
+                    document.getElementById('login-overlay').classList.add('hidden');
+                    document.getElementById('register-overlay').style.display = 'flex';
+                    if (u.displayName) document.getElementById('reg-name').value = u.displayName;
+                }
             } else {
                 user = null;
                 document.getElementById('login-overlay').classList.remove('hidden');
+                ['register-overlay', 'pending-overlay', 'revoked-overlay'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
             }
         });
+
+        async function checkUserStatus() {
+            if (!user) return 'unknown';
+            const docSnap = await getDoc(doc(db, "promoters", user.email));
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.status === 'inactive') return 'inactive';
+                return 'active';
+            }
+            const pendingSnap = await getDoc(doc(db, "pending_users", user.email));
+            if (pendingSnap.exists()) return 'pending';
+            return 'new';
+        }
+
+        window.submitRegistration = async function () {
+            const name = document.getElementById('reg-name').value.trim();
+            const code = document.getElementById('reg-code').value.trim();
+            if (!name) { alert('Por favor ingresa tu nombre completo.'); return; }
+            if (!/^\d{4}$/.test(code)) { alert('La clave de agente debe ser exactamente 4 dígitos numéricos.'); return; }
+            const btn = document.getElementById('reg-submit-btn');
+            btn.disabled = true;
+            btn.textContent = 'Enviando...';
+            try {
+                await setDoc(doc(db, "pending_users", user.email), {
+                    name,
+                    email: user.email,
+                    companyCode: code,
+                    timestamp: new Date().toISOString()
+                });
+                document.getElementById('register-overlay').style.display = 'none';
+                document.getElementById('pending-overlay').style.display = 'flex';
+            } catch (err) {
+                alert('Error al enviar solicitud: ' + err.message);
+                btn.disabled = false;
+                btn.textContent = 'Enviar Solicitud de Acceso';
+            }
+        };
 
         // ─── SERVICE WORKER ──────────────────────────────────────────────────────────
         if ('serviceWorker' in navigator) {
@@ -1178,6 +1494,8 @@
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 state.promoterName = data.promoterName || data.coachName || user.displayName || '';
+                state.reclutamiento = data.reclutamiento || [];
+                state.ventaCarrera = data.ventaCarrera || [];
                 state.teamCode = data.teamCode || '';
                 state.promotorNum = data.promotorNum || null;
                 // promotorCode = what coaches use to link to this promoter
@@ -1366,6 +1684,168 @@
         // ─── INIT ─────────────────────────────────────────────────────────────────────
         window.init = function () {
             refreshAll();
+            initBitacora();
+        }
+
+        // ─── BITÁCORA VIEW (solo lectura) ─────────────────────────────────────────────
+        let bitCurrentWeeks = [];
+
+        function getBitAgentList() { return state.agents; }
+        function getBitAgentCoach(name) { return state.agentCoachMap[name]; }
+
+        function refreshBitCoachFilter() {
+            const sel = document.getElementById('bit-coach-filter');
+            if (!sel) return;
+            const prev = sel.value;
+            sel.innerHTML = '<option value="">— Todos los coaches —</option>' +
+                state.coaches.map(c => `<option value="${c.email}">${c.coachName || c.email}</option>`).join('');
+            if (prev) sel.value = prev;
+            refreshBitAgentSelect();
+        }
+
+        window.refreshBitAgentSelect = function () {
+            const coachF = document.getElementById('bit-coach-filter').value;
+            const sel = document.getElementById('bit-agent');
+            const prev = sel.value;
+            const agents = coachF
+                ? getBitAgentList().filter(a => getBitAgentCoach(a) === coachF)
+                : getBitAgentList();
+            sel.innerHTML = '<option value="">— Selecciona agente —</option>' +
+                agents.map(a => `<option value="${a}">${a}</option>`).join('');
+            sel.value = agents.includes(prev) ? prev : '';
+            autoLoadBit();
+        };
+
+        window.updateBitCalendar = function () {
+            const month = parseInt(document.getElementById('bit-month').value);
+            const year = parseInt(document.getElementById('bit-year').value);
+            if (!month || !year) return;
+            bitCurrentWeeks = getMonthCalendar(year, month);
+            const sel = document.getElementById('bit-semana');
+            const prev = sel.value;
+            sel.innerHTML = bitCurrentWeeks.map((w, i) => {
+                const f = w[0], l = w[w.length - 1];
+                return `<option value="${i + 1}">Sem ${i + 1} &mdash; ${f.dayName.slice(0, 3)} ${f.date} al ${l.dayName.slice(0, 3)} ${l.date}</option>`;
+            }).join('');
+            sel.value = (prev && parseInt(prev) <= bitCurrentWeeks.length) ? prev : '1';
+            autoLoadBit();
+        };
+
+        window.autoLoadBit = function () {
+            const agent = document.getElementById('bit-agent').value;
+            const semana = document.getElementById('bit-semana').value;
+            const month = parseInt(document.getElementById('bit-month').value);
+            const year = parseInt(document.getElementById('bit-year').value);
+            if (!month || !year) return;
+            const mes = MONTHS_ES[month - 1] + ' ' + year;
+            const semIdx = parseInt(semana) - 1;
+            const weekDays = bitCurrentWeeks[semIdx] || [];
+            buildBitWeekTable(weekDays, agent, mes, semana);
+            const info = document.getElementById('bit-week-info');
+            if (weekDays.length && agent) {
+                info.textContent = `📅 ${mes} · Semana ${semana} de ${bitCurrentWeeks.length} · Días: ${weekDays.map(d => d.dayName + ' ' + d.date).join(', ')}`;
+            } else { info.textContent = ''; }
+            updateBitMonthTotals(agent, mes);
+        };
+
+        function buildBitWeekTable(weekDays, agent, mes, semana) {
+            const tbody = document.getElementById('bit-week-body');
+            if (!weekDays.length || !agent) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--slate);padding:20px;">${agent ? '' : 'Selecciona un agente para ver su bitácora.'}</td></tr>`;
+                resetBitTotals(); return;
+            }
+            const entry = state.entries.find(e => e.agent === agent && e.mes === mes && e.semana == semana);
+            const diasMap = {};
+            if (entry) entry.dias.forEach(d => { diasMap[d.dia] = d; });
+            let semP = 0, semE = 0, semC = 0, semV = 0, semS = 0, semPrima = 0;
+            tbody.innerHTML = weekDays.map(({ dayName, date }) => {
+                const d = diasMap[dayName] || { P: 0, E: 0, C: 0, V: 0, S: 0, prima: 0 };
+                const P = d.P || 0, E = d.E || 0, C = d.C || 0, V = d.V || 0, S = d.S || 0, pr = parseFloat(d.prima) || 0;
+                semP += P; semE += E; semC += C; semV += V; semS += S; semPrima += pr;
+                const funnel = P >= E && E >= C && C >= V ? (P > 0 ? '🟢' : '⚪') : '🔴';
+                return `<tr>
+                  <td class="day-label">${dayName} <span style="font-size:10px;color:var(--slate);">${date}</span></td>
+                  <td style="text-align:center;">${P}</td><td style="text-align:center;">${E}</td>
+                  <td style="text-align:center;">${C}</td><td style="text-align:center;">${V}</td>
+                  <td style="text-align:center;">${S}</td>
+                  <td style="text-align:center;">$${pr.toFixed(0)}</td>
+                  <td style="text-align:center;font-size:16px;">${funnel}</td>
+                </tr>`;
+            }).join('');
+            document.getElementById('bit-tt-P').textContent = semP;
+            document.getElementById('bit-tt-E').textContent = semE;
+            document.getElementById('bit-tt-C').textContent = semC;
+            document.getElementById('bit-tt-V').textContent = semV;
+            document.getElementById('bit-tt-S').textContent = semS;
+            document.getElementById('bit-tt-$').textContent = '$' + semPrima.toFixed(0);
+        }
+
+        function updateBitMonthTotals(agent, mes) {
+            if (!agent) { resetBitMonthTotals(); return; }
+            const monthEntries = state.entries.filter(e => e.agent === agent && e.mes === mes);
+            let mP = 0, mE = 0, mC = 0, mV = 0, mS = 0, mPrima = 0;
+            monthEntries.forEach(e => {
+                if (e.totales) { mP += e.totales.P || 0; mE += e.totales.E || 0; mC += e.totales.C || 0; mV += e.totales.V || 0; mS += e.totales.S || 0; mPrima += parseFloat(e.totales.prima) || 0; }
+            });
+            document.getElementById('bit-ttm-P').textContent = mP;
+            document.getElementById('bit-ttm-E').textContent = mE;
+            document.getElementById('bit-ttm-C').textContent = mC;
+            document.getElementById('bit-ttm-V').textContent = mV;
+            document.getElementById('bit-ttm-S').textContent = mS;
+            document.getElementById('bit-ttm-$').textContent = '$' + mPrima.toFixed(0);
+        }
+
+        function resetBitTotals() {
+            ['P', 'E', 'C', 'V', 'S'].forEach(c => { document.getElementById(`bit-tt-${c}`).textContent = '0'; });
+            document.getElementById('bit-tt-$').textContent = '$0';
+            resetBitMonthTotals();
+        }
+
+        function resetBitMonthTotals() {
+            ['P', 'E', 'C', 'V', 'S'].forEach(c => { document.getElementById(`bit-ttm-${c}`).textContent = '0'; });
+            document.getElementById('bit-ttm-$').textContent = '$0';
+        }
+
+        window.renderBitHistory = function () {
+            const grid = document.getElementById('bit-history-grid');
+            const coachF = document.getElementById('bit-coach-filter').value;
+            const agentF = document.getElementById('bit-agent').value;
+            let filtered = state.entries;
+            if (coachF) filtered = filtered.filter(e => getBitAgentCoach(e.agent) === coachF);
+            if (agentF) filtered = filtered.filter(e => e.agent === agentF);
+            if (!filtered.length) {
+                grid.innerHTML = '<div class="empty-state"><i class="fa fa-inbox"></i> No hay entradas.</div>';
+                return;
+            }
+            grid.innerHTML = filtered.map(e => {
+                const origIdx = state.entries.indexOf(e);
+                return `<div class="history-chip" onclick="loadBitEntry(${origIdx})">
+                  <span style="font-weight:700;color:var(--gold)">${e.agent}</span>
+                  <span style="color:var(--slate)">${e.mes} · Sem ${e.semana}</span>
+                  <span style="color:var(--teal);font-size:11px;">P:${e.totales?.P||0} E:${e.totales?.E||0} V:${e.totales?.V||0}</span>
+                </div>`;
+            }).join('');
+        };
+
+        window.loadBitEntry = function (i) {
+            const e = state.entries[i];
+            if (!e) return;
+            document.getElementById('bit-agent').value = e.agent;
+            const parts = e.mes.split(' ');
+            const mIdx = MONTHS_ES.indexOf(parts[0]);
+            if (mIdx >= 0) {
+                document.getElementById('bit-month').value = mIdx + 1;
+                document.getElementById('bit-year').value = parseInt(parts[1]) || new Date().getFullYear();
+                updateBitCalendar();
+            }
+            document.getElementById('bit-semana').value = e.semana;
+            autoLoadBit();
+            document.getElementById('modal-bit-log').classList.remove('open');
+        };
+
+        function initBitacora() {
+            updateBitCalendar();
+            refreshBitCoachFilter();
         }
 
         window.saveState = async function () {
@@ -1381,6 +1861,7 @@
             renderKPIs();
             refreshMonthFilters();
             renderCoachReportes();
+            refreshBitCoachFilter();
         }
 
         // ─── TABS ─────────────────────────────────────────────────────────────────────
@@ -1393,17 +1874,15 @@
             if (name === 'kpis') renderKPIs();
             if (name === 'leaderboard') renderLeaderboard();
             if (name === 'reporte') renderCoachReportes();
+            if (name === 'mi-reporte') tryLoadPromoterReporte();
         }
 
         // ─── CONFIG ──────────────────────────────────────────────────────────────────
         window.openConfig = function () {
             const inpCoach = document.getElementById('inp-coach');
-            const inpTeam = document.getElementById('inp-teamcode');
-            const inpDirCode = document.getElementById('inp-directorcode');
             if (inpCoach) inpCoach.value = state.promoterName || '';
-            if (inpTeam) inpTeam.value = state.promotorCode || '';
-            // Show director code in 3rd field
-            if (inpDirCode) inpDirCode.value = state.directorCode || '';
+            const codeEl = document.getElementById('disp-mycode');
+            if (codeEl) codeEl.textContent = state.companyCode || state.promotorCode || '—';
             renderCoachList();
             document.getElementById('config-modal').classList.add('open');
         }
@@ -1433,8 +1912,6 @@
                 }
 
                 state.promoterName = document.getElementById('inp-coach').value.trim();
-                state.directorCode = document.getElementById('inp-directorcode').value.trim();
-                state.promotorCode = document.getElementById('inp-teamcode').value.trim();
 
                 await saveState();
                 startListeningCoaches();
@@ -2153,144 +2630,376 @@
             if (cur && meses.includes(cur)) sel.value = cur;
         }
 
-        function renderCoachReportes() {
+        const MESES_ABREV = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+        window.switchReporteSub = function(sub) {
+            document.getElementById('rpt-section-ventas').style.display = sub === 'ventas' ? '' : 'none';
+            document.getElementById('rpt-section-reclutamiento').style.display = sub === 'reclutamiento' ? '' : 'none';
+            const btnV = document.getElementById('rpt-sub-btn-ventas');
+            const btnR = document.getElementById('rpt-sub-btn-reclutamiento');
+            if (btnV) { btnV.style.background = sub === 'ventas' ? 'var(--gold)' : 'rgba(255,255,255,0.08)'; btnV.style.color = sub === 'ventas' ? '#000' : 'var(--white)'; }
+            if (btnR) { btnR.style.background = sub === 'reclutamiento' ? 'var(--green)' : 'rgba(255,255,255,0.08)'; btnR.style.color = sub === 'reclutamiento' ? '#000' : 'var(--white)'; }
+            if (sub === 'reclutamiento') { refreshReclFilters(); renderReclutamientoSection(); }
+        };
+
+        window.closeReclDetail = function() {
+            document.getElementById('recl-detail-modal').classList.remove('open');
+        };
+
+        window.showReclDetail = function(coachName, mes, reclJson) {
+            const recl = JSON.parse(decodeURIComponent(reclJson));
+            document.getElementById('recl-detail-header').innerHTML = `<strong style="color:var(--white);">${escapeHtml(coachName)}</strong> · ${escapeHtml(mes)}`;
+            document.getElementById('recl-detail-content').innerHTML = `
+                <div style="padding:12px; background:rgba(16,185,129,0.09); border-left:3px solid var(--green); border-radius:6px;">
+                    <div style="font-weight:700; color:var(--green); margin-bottom:4px;"><i class="fa fa-circle-check"></i> ¿Tiene prospectos en entrenamiento?</div>
+                    <div>Sí</div>
+                </div>
+                <div style="padding:12px; background:rgba(255,255,255,0.04); border-left:3px solid var(--gold); border-radius:6px;">
+                    <div style="font-weight:700; color:var(--gold); margin-bottom:4px;"><i class="fa fa-users"></i> Número de prospectos a cargo</div>
+                    <div>${escapeHtml(recl.q2 || '—')}</div>
+                </div>
+                <div style="padding:12px; background:rgba(255,255,255,0.04); border-left:3px solid var(--blue); border-radius:6px;">
+                    <div style="font-weight:700; color:var(--blue); margin-bottom:4px;"><i class="fa fa-id-card"></i> Nombres de prospectos</div>
+                    <div style="white-space:pre-wrap;">${escapeHtml(recl.q3 || '—')}</div>
+                </div>
+                <div style="padding:12px; background:rgba(255,255,255,0.04); border-left:3px solid var(--teal); border-radius:6px;">
+                    <div style="font-weight:700; color:var(--teal); margin-bottom:4px;"><i class="fa fa-handshake"></i> Compromiso de formalización</div>
+                    <div style="white-space:pre-wrap;">${escapeHtml(recl.q4 || '—')}</div>
+                </div>
+            `;
+            document.getElementById('recl-detail-modal').classList.add('open');
+        };
+
+        function refreshReclFilters() {
+            // Year filter — built from actual data
+            const yearSel = document.getElementById('recl-year-filter');
+            if (yearSel) {
+                const years = new Set();
+                state.coaches.forEach(c => (c.reclutamiento||[]).forEach(r => {
+                    if (r.mes) { const y = r.mes.split(' ')[1]; if (y) years.add(y); }
+                }));
+                const sorted = [...years].sort().reverse();
+                const cur = yearSel.value;
+                yearSel.innerHTML = '<option value="">Todos los años</option>' +
+                    sorted.map(y => `<option value="${y}" ${y===cur?'selected':''}>${y}</option>`).join('');
+                if (!cur && sorted.length) yearSel.value = sorted[0];
+            }
+            // Coach filter
+            const coachSel = document.getElementById('recl-coach-filter');
+            if (coachSel) {
+                const cur = coachSel.value;
+                coachSel.innerHTML = '<option value="">Todos los coaches</option>' +
+                    state.coaches.slice().sort((a,b)=>(a.coachName||'').localeCompare(b.coachName||''))
+                    .map(c => `<option value="${escapeHtml(c.email)}" ${c.email===cur?'selected':''}>${escapeHtml(c.coachName)}</option>`).join('');
+            }
+        }
+
+        function makeMonthBoxes(coach, reclMap, mesesFull) {
+            return mesesFull.map((mesFull, i) => {
+                const recl = reclMap[mesFull];
+                const abrev = MESES_ABREV[i];
+                let bg = 'rgba(255,255,255,0.06)', icon = '·', color = 'rgba(255,255,255,0.15)', border = 'rgba(255,255,255,0.08)', cursor = 'default', clickable = false;
+                if (recl) {
+                    if (recl.q1 === 'si') { bg='rgba(16,185,129,0.25)'; icon='✓'; color='var(--green)'; border='var(--green)'; clickable=true; cursor='pointer'; }
+                    else if (recl.q1 === 'no') { bg='rgba(239,68,68,0.25)'; icon='✗'; color='var(--red)'; border='var(--red)'; }
+                }
+                const clickAttr = clickable ? `onclick="showReclDetail('${escapeHtml(coach.coachName)}','${mesFull}','${encodeURIComponent(JSON.stringify(recl))}')" title="Ver detalles"` : '';
+                return `<div ${clickAttr} style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px;background:${bg};border:1px solid ${border};border-radius:8px;cursor:${cursor};min-height:62px;" ${clickable?'onmouseover="this.style.opacity=\'0.8\'"onmouseout="this.style.opacity=\'1\'"':''}>
+                    <div style="font-size:10px;font-weight:700;color:var(--slate);">${abrev}</div>
+                    <div style="font-size:18px;font-weight:800;color:${color};">${icon}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderReclutamientoSection() {
+            const container = document.getElementById('reclutamiento-grid');
+            if (!container) return;
+
+            const coachF = document.getElementById('recl-coach-filter')?.value || '';
+            const yearF  = document.getElementById('recl-year-filter')?.value  || '';
+
+            let coachesToShow = state.coaches.slice().sort((a,b) => (a.coachName||'').localeCompare(b.coachName||''));
+            if (coachF) coachesToShow = coachesToShow.filter(c => c.email === coachF);
+
+            if (!coachesToShow.length) {
+                container.innerHTML = '<div class="empty-state"><i class="fa fa-inbox"></i>No hay coaches con los filtros actuales.</div>';
+                return;
+            }
+
+            const html = coachesToShow.map(coach => {
+                const reclMap = {};
+                (coach.reclutamiento||[]).forEach(r => { if (r.mes) reclMap[r.mes] = r; });
+
+                // All years present in data for this coach
+                const allYears = [...new Set(Object.keys(reclMap).map(m => m.split(' ')[1]).filter(Boolean))].sort().reverse();
+                const yearsToShow = yearF ? (allYears.includes(yearF) ? [yearF] : []) : allYears;
+
+                if (!yearsToShow.length) return '';
+
+                const yearBlocks = yearsToShow.map(year => {
+                    const mesesFull = MONTHS_ES.map(m => `${m} ${year}`);
+                    const siCount = mesesFull.filter(m => reclMap[m]?.q1 === 'si').length;
+                    const noCount = mesesFull.filter(m => reclMap[m]?.q1 === 'no').length;
+                    const pending = 12 - siCount - noCount;
+                    return `
+                    <div style="margin-bottom:${yearsToShow.length>1?'18px':'0'};">
+                        ${yearsToShow.length>1 ? `<div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:8px;letter-spacing:1px;">${year}</div>` : ''}
+                        <div style="display:flex;gap:10px;font-size:12px;margin-bottom:8px;">
+                            <span style="color:var(--green);font-weight:700;"><i class="fa fa-circle-check"></i> ${siCount} Sí</span>
+                            <span style="color:var(--red);font-weight:700;"><i class="fa fa-circle-xmark"></i> ${noCount} No</span>
+                            ${pending > 0 ? `<span style="color:var(--slate);">${pending} pendientes</span>` : ''}
+                        </div>
+                        <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:5px;">${makeMonthBoxes(coach, reclMap, mesesFull)}</div>
+                    </div>`;
+                }).join('');
+
+                return `
+                <div style="background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:18px 20px;">
+                    <div style="margin-bottom:14px;">
+                        <div style="font-weight:700;font-size:15px;color:var(--white);"><i class="fa fa-user-tie" style="color:var(--gold);margin-right:6px;"></i>${escapeHtml(coach.coachName)}</div>
+                        <div style="font-size:11px;color:var(--slate);">${escapeHtml(coach.email)}</div>
+                    </div>
+                    ${yearBlocks}
+                </div>`;
+            }).filter(Boolean).join('');
+
+            container.innerHTML = html || '<div class="empty-state"><i class="fa fa-inbox"></i>No hay datos de reclutamiento con los filtros actuales.</div>';
+        }
+
+        function renderVentasSection() {
             const container = document.getElementById('coach-reportes-list');
             if (!container) return;
 
             refreshCoachReporteMonthFilter();
 
-            const coachF = document.getElementById('rpt-coach-filter') ? document.getElementById('rpt-coach-filter').value : '';
-            const mesF = document.getElementById('rpt-mes-filter') ? document.getElementById('rpt-mes-filter').value : '';
+            const coachF = document.getElementById('rpt-coach-filter')?.value || '';
+            const mesF = document.getElementById('rpt-mes-filter')?.value || '';
 
-            // Build list of coaches to display
             const coachesToShow = coachF
                 ? state.coaches.filter(c => c.email === coachF)
-                : state.coaches.slice().sort((a, b) => (a.coachName || '').localeCompare(b.coachName || ''));
+                : state.coaches.slice().sort((a, b) => (a.coachName||'').localeCompare(b.coachName||''));
 
             if (!coachesToShow.length) {
                 container.innerHTML = '<div class="empty-state"><i class="fa fa-inbox"></i>No hay coaches en tu equipo todavía.</div>';
                 return;
             }
 
-            // For each coach, gather reportes by month (combined with reclutamiento)
             const allBlocks = [];
-
             coachesToShow.forEach(coach => {
                 const reportes = coach.reportes || [];
-                const reclutamiento = coach.reclutamiento || [];
-
-                // Get unique meses for this coach
                 const mesesSet = new Set();
                 reportes.forEach(r => { if (r.mes) mesesSet.add(r.mes); });
-                reclutamiento.forEach(r => { if (r.mes) mesesSet.add(r.mes); });
                 let meses = [...mesesSet];
-
                 if (mesF) meses = meses.filter(m => m === mesF);
-
-                // Sort newest first
                 meses.sort((a, b) => {
-                    const pa = a.split(' '); const pb = b.split(' ');
-                    const mA = MONTHS_ES.indexOf(pa[0]) + 1; const mB = MONTHS_ES.indexOf(pb[0]) + 1;
-                    const yA = parseInt(pa[1]) || 0; const yB = parseInt(pb[1]) || 0;
+                    const pa = a.split(' '), pb = b.split(' ');
+                    const mA = MONTHS_ES.indexOf(pa[0])+1, mB = MONTHS_ES.indexOf(pb[0])+1;
+                    const yA = parseInt(pa[1])||0, yB = parseInt(pb[1])||0;
                     if (yA !== yB) return yB - yA;
                     return mB - mA;
                 });
-
                 meses.forEach(mes => {
                     const rpt = reportes.find(r => r.mes === mes);
-                    const recl = reclutamiento.find(r => r.mes === mes);
-                    allBlocks.push({
-                        coachName: coach.coachName,
-                        coachEmail: coach.email,
-                        mes,
-                        rpt,
-                        recl
-                    });
+                    if (rpt) allBlocks.push({ coachName: coach.coachName, coachEmail: coach.email, mes, rpt });
                 });
             });
 
             if (!allBlocks.length) {
-                container.innerHTML = '<div class="empty-state"><i class="fa fa-inbox"></i>No hay reportes de coaches con los filtros actuales.</div>';
+                container.innerHTML = '<div class="empty-state"><i class="fa fa-inbox"></i>No hay reportes de ventas con los filtros actuales.</div>';
                 return;
             }
 
-            // Sort all blocks: newest first, then by coach name
             allBlocks.sort((a, b) => {
-                const pa = a.mes.split(' '); const pb = b.mes.split(' ');
-                const mA = MONTHS_ES.indexOf(pa[0]) + 1; const mB = MONTHS_ES.indexOf(pb[0]) + 1;
-                const yA = parseInt(pa[1]) || 0; const yB = parseInt(pb[1]) || 0;
+                const pa = a.mes.split(' '), pb = b.mes.split(' ');
+                const mA = MONTHS_ES.indexOf(pa[0])+1, mB = MONTHS_ES.indexOf(pb[0])+1;
+                const yA = parseInt(pa[1])||0, yB = parseInt(pb[1])||0;
                 if (yA !== yB) return yB - yA;
                 if (mA !== mB) return mB - mA;
-                return (a.coachName || '').localeCompare(b.coachName || '');
+                return (a.coachName||'').localeCompare(b.coachName||'');
             });
 
             container.innerHTML = allBlocks.map(blk => {
                 const rpt = blk.rpt;
-                const recl = blk.recl;
-
-                let reclutamientoHtml = '';
-                if (recl) {
-                    if (recl.q1 === 'si') {
-                        reclutamientoHtml = `
-                            <div><strong style="color:var(--gold);">Prospectos a cargo (Q2):</strong> ${escapeHtml(recl.q2 || '0')}</div>
-                            <div><strong style="color:var(--gold);">Nombres (Q3):</strong> ${escapeHtml(recl.q3 || '—')}</div>
-                            <div><strong style="color:var(--gold);">Compromiso de formalización (Q4):</strong> ${escapeHtml(recl.q4 || '—')}</div>
-                        `;
-                    } else {
-                        reclutamientoHtml = `<div style="color:var(--slate);">No tiene prospectos en entrenamiento actualmente.</div>`;
-                    }
-                } else {
-                    reclutamientoHtml = `<div style="color:var(--slate);">Sin datos de reclutamiento.</div>`;
-                }
-
-                const fechaStr = rpt && rpt.fecha ? new Date(rpt.fecha).toLocaleDateString('es-MX') : '';
-
+                const fechaStr = rpt.fecha ? new Date(rpt.fecha).toLocaleDateString('es-MX') : '';
                 return `
-                <div style="background:var(--panel2); border:1px solid var(--border); border-radius:12px; padding:20px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+                <div style="background:var(--panel2);border:1px solid var(--border);border-radius:12px;padding:20px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
                         <div>
-                            <div style="font-family:'Playfair Display', serif; font-size:20px; color:var(--gold); font-weight:700;">
-                                <i class="fa fa-user-tie"></i> ${escapeHtml(blk.coachName)}
-                            </div>
-                            <div style="font-size:11px; color:var(--slate);">${escapeHtml(blk.coachEmail)}</div>
+                            <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--gold);font-weight:700;"><i class="fa fa-user-tie"></i> ${escapeHtml(blk.coachName)}</div>
+                            <div style="font-size:11px;color:var(--slate);">${escapeHtml(blk.coachEmail)}</div>
                         </div>
                         <div style="text-align:right;">
-                            <div style="font-weight:700; color:var(--white); font-size:14px;">${escapeHtml(blk.mes)}</div>
-                            ${fechaStr ? `<div style="font-size:10px; color:var(--slate);">Enviado: ${fechaStr}</div>` : ''}
+                            <div style="font-weight:700;color:var(--white);font-size:14px;">${escapeHtml(blk.mes)}</div>
+                            ${fechaStr ? `<div style="font-size:10px;color:var(--slate);">Enviado: ${fechaStr}</div>` : ''}
                         </div>
                     </div>
-
-                    ${rpt ? `
-                    <div style="display:grid; gap:14px; font-size:13px; line-height:1.55;">
-                        <div style="padding:12px; background:rgba(59,130,246,0.08); border-left:3px solid var(--blue); border-radius:6px;">
-                            <div style="font-weight:700; color:var(--blue); margin-bottom:6px;"><i class="fa fa-chart-line"></i> Análisis general del mes</div>
-                            <div style="white-space:pre-wrap;">${escapeHtml(rpt.analisis || '—')}</div>
+                    <div style="display:grid;gap:14px;font-size:13px;line-height:1.55;">
+                        <div style="padding:12px;background:rgba(59,130,246,0.08);border-left:3px solid var(--blue);border-radius:6px;">
+                            <div style="font-weight:700;color:var(--blue);margin-bottom:6px;"><i class="fa fa-chart-line"></i> Análisis general del mes</div>
+                            <div style="white-space:pre-wrap;">${escapeHtml(rpt.analisis||'—')}</div>
                         </div>
-                        <div style="padding:12px; background:rgba(239,68,68,0.08); border-left:3px solid var(--red); border-radius:6px;">
-                            <div style="font-weight:700; color:var(--red); margin-bottom:6px;"><i class="fa fa-triangle-exclamation"></i> Sospecha de fraude en actividad</div>
-                            <div style="white-space:pre-wrap;">${escapeHtml(rpt.agentes || '—')}</div>
+                        <div style="padding:12px;background:rgba(239,68,68,0.08);border-left:3px solid var(--red);border-radius:6px;">
+                            <div style="font-weight:700;color:var(--red);margin-bottom:6px;"><i class="fa fa-triangle-exclamation"></i> Sospecha de fraude en actividad</div>
+                            <div style="white-space:pre-wrap;">${escapeHtml(rpt.agentes||'—')}</div>
                         </div>
-                        <div style="padding:12px; background:rgba(16,185,129,0.08); border-left:3px solid var(--green); border-radius:6px;">
-                            <div style="font-weight:700; color:var(--green); margin-bottom:6px;"><i class="fa fa-handshake"></i> Compromisos del coach</div>
-                            <div style="white-space:pre-wrap;">${escapeHtml(rpt.compromisos || '—')}</div>
+                        <div style="padding:12px;background:rgba(16,185,129,0.08);border-left:3px solid var(--green);border-radius:6px;">
+                            <div style="font-weight:700;color:var(--green);margin-bottom:6px;"><i class="fa fa-handshake"></i> Compromisos del coach</div>
+                            <div style="white-space:pre-wrap;">${escapeHtml(rpt.compromisos||'—')}</div>
                         </div>
                         ${rpt.notas ? `
-                        <div style="padding:12px; background:rgba(148,163,184,0.08); border-left:3px solid var(--slate); border-radius:6px;">
-                            <div style="font-weight:700; color:var(--slate); margin-bottom:6px;"><i class="fa fa-note-sticky"></i> Notas adicionales</div>
+                        <div style="padding:12px;background:rgba(148,163,184,0.08);border-left:3px solid var(--slate);border-radius:6px;">
+                            <div style="font-weight:700;color:var(--slate);margin-bottom:6px;"><i class="fa fa-note-sticky"></i> Notas adicionales</div>
                             <div style="white-space:pre-wrap;">${escapeHtml(rpt.notas)}</div>
-                        </div>
-                        ` : ''}
+                        </div>` : ''}
                     </div>
-                    ` : `<div style="color:var(--slate); font-style:italic; padding:10px 0;">Este coach no ha enviado reporte de ventas para ${escapeHtml(blk.mes)}.</div>`}
-
-                    <div style="margin-top:14px; padding:12px; background:rgba(212,175,55,0.08); border-left:3px solid var(--gold); border-radius:6px; font-size:13px; line-height:1.55;">
-                        <div style="font-weight:700; color:var(--gold); margin-bottom:8px;"><i class="fa fa-user-plus"></i> Reclutamiento</div>
-                        ${reclutamientoHtml}
-                    </div>
-                </div>
-                `;
+                </div>`;
             }).join('');
         }
+
+        function renderCoachReportes() {
+            renderVentasSection();
+            // If reclutamiento section is visible, refresh it too
+            if (document.getElementById('rpt-section-reclutamiento')?.style.display !== 'none') {
+                renderReclutamientoSection();
+            }
+        }
+
+        // ─── PROMOTER REPORT ──────────────────────────────────────────────────────────
+
+        function resetPromoterReclButtons() {
+            const si = document.getElementById('pBtn-recl-si');
+            const no = document.getElementById('pBtn-recl-no');
+            if (si) { si.style.opacity='1'; si.style.background=''; si.style.color=''; }
+            if (no) { no.style.opacity='1'; no.style.background=''; no.style.color=''; }
+            ['precl-q2','precl-q3','precl-q4'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.style.display='none';
+            });
+        }
+
+        function resetPromoterVentaButtons() {
+            const si = document.getElementById('pBtn-venta-si');
+            const no = document.getElementById('pBtn-venta-no');
+            if (si) { si.style.opacity='1'; si.style.background=''; si.style.color=''; }
+            if (no) { no.style.opacity='1'; no.style.background=''; no.style.color=''; }
+            ['pventa-q2','pventa-q3'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.style.display='none';
+            });
+        }
+
+        window.handlePromoterReclQ1 = function(val) {
+            const si = document.getElementById('pBtn-recl-si');
+            const no = document.getElementById('pBtn-recl-no');
+            if (val === 'si') {
+                si.style.opacity='0.5'; si.style.background='var(--green)'; si.style.color='#000';
+                no.style.opacity='1'; no.style.background=''; no.style.color='';
+                ['precl-q2','precl-q3','precl-q4'].forEach(id => document.getElementById(id).style.display='block');
+            } else {
+                no.style.opacity='0.5'; no.style.background='var(--red)'; no.style.color='#fff';
+                si.style.opacity='1'; si.style.background=''; si.style.color='';
+                ['precl-q2','precl-q3','precl-q4'].forEach(id => document.getElementById(id).style.display='none');
+            }
+        };
+
+        window.handlePromoterVentaQ1 = function(val) {
+            const si = document.getElementById('pBtn-venta-si');
+            const no = document.getElementById('pBtn-venta-no');
+            if (val === 'si') {
+                si.style.opacity='0.5'; si.style.background='var(--green)'; si.style.color='#000';
+                no.style.opacity='1'; no.style.background=''; no.style.color='';
+                ['pventa-q2','pventa-q3'].forEach(id => document.getElementById(id).style.display='block');
+            } else {
+                no.style.opacity='0.5'; no.style.background='var(--red)'; no.style.color='#fff';
+                si.style.opacity='1'; si.style.background=''; si.style.color='';
+                ['pventa-q2','pventa-q3'].forEach(id => document.getElementById(id).style.display='none');
+            }
+        };
+
+        window.tryLoadPromoterReporte = function() {
+            const mes = document.getElementById('prpt-mes')?.value;
+            const year = document.getElementById('prpt-year')?.value;
+            if (!mes || !year) return;
+            const mesStr = mes + ' ' + year;
+
+            // Load reclutamiento
+            resetPromoterReclButtons();
+            ['precl-cantidad','precl-nombres','precl-compromiso'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.value = '';
+            });
+            const recl = (state.reclutamiento||[]).find(r => r.mes === mesStr);
+            if (recl) {
+                handlePromoterReclQ1(recl.q1);
+                if (recl.q1 === 'si') {
+                    const c = document.getElementById('precl-cantidad'); if (c) c.value = recl.q2||'';
+                    const n = document.getElementById('precl-nombres'); if (n) n.value = recl.q3||'';
+                    const k = document.getElementById('precl-compromiso'); if (k) k.value = recl.q4||'';
+                }
+            }
+
+            // Load ventaCarrera
+            resetPromoterVentaButtons();
+            ['pventa-nombre','pventa-cuando'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.value = '';
+            });
+            const venta = (state.ventaCarrera||[]).find(v => v.mes === mesStr);
+            if (venta) {
+                handlePromoterVentaQ1(venta.q1);
+                if (venta.q1 === 'si') {
+                    const n = document.getElementById('pventa-nombre'); if (n) n.value = venta.q2||'';
+                    const k = document.getElementById('pventa-cuando'); if (k) k.value = venta.q3||'';
+                }
+            }
+        };
+
+        window.savePromoterReporte = async function() {
+            const mesVal  = document.getElementById('prpt-mes')?.value;
+            const yearVal = document.getElementById('prpt-year')?.value;
+            if (!mesVal) { alert('Selecciona el mes'); return; }
+            if (!yearVal) { alert('Selecciona el año'); return; }
+            const mes = mesVal + ' ' + yearVal;
+
+            // Leer reclutamiento
+            const si = document.getElementById('pBtn-recl-si');
+            const no = document.getElementById('pBtn-recl-no');
+            const reclQ1 = si?.style.opacity === '0.5' ? 'si' : (no?.style.opacity === '0.5' ? 'no' : null);
+            if (reclQ1 === null) { alert('Responde la pregunta de Reclutamiento'); return; }
+            const reclQ2 = document.getElementById('precl-cantidad')?.value.trim() || '';
+            const reclQ3 = document.getElementById('precl-nombres')?.value.trim() || '';
+            const reclQ4 = document.getElementById('precl-compromiso')?.value.trim() || '';
+            if (reclQ1 === 'si' && !reclQ2) { alert('Indica cuántos prospectos tienes'); return; }
+            if (reclQ1 === 'si' && !reclQ3) { alert('Escribe los nombres de los prospectos'); return; }
+            if (reclQ1 === 'si' && !reclQ4) { alert('Describe tu compromiso de formalización'); return; }
+
+            // Leer ventaCarrera
+            const vsi = document.getElementById('pBtn-venta-si');
+            const vno = document.getElementById('pBtn-venta-no');
+            const ventaQ1 = vsi?.style.opacity === '0.5' ? 'si' : (vno?.style.opacity === '0.5' ? 'no' : null);
+            if (ventaQ1 === null) { alert('Responde la pregunta de Venta de Carrera de Coach'); return; }
+            const ventaQ2 = document.getElementById('pventa-nombre')?.value.trim() || '';
+            const ventaQ3 = document.getElementById('pventa-cuando')?.value.trim() || '';
+            if (ventaQ1 === 'si' && !ventaQ2) { alert('Escribe el nombre del agente'); return; }
+            if (ventaQ1 === 'si' && !ventaQ3) { alert('Indica para cuándo puedes formalizarlo'); return; }
+
+            // Guardar en state
+            const reclEntry = { mes, q1: reclQ1, q2: reclQ1==='si'?reclQ2:'', q3: reclQ1==='si'?reclQ3:'', q4: reclQ1==='si'?reclQ4:'', fecha: new Date().toISOString() };
+            if (!state.reclutamiento) state.reclutamiento = [];
+            const ri = state.reclutamiento.findIndex(e => e.mes === mes);
+            if (ri >= 0) state.reclutamiento[ri] = reclEntry; else state.reclutamiento.push(reclEntry);
+
+            const ventaEntry = { mes, q1: ventaQ1, q2: ventaQ1==='si'?ventaQ2:'', q3: ventaQ1==='si'?ventaQ3:'', fecha: new Date().toISOString() };
+            if (!state.ventaCarrera) state.ventaCarrera = [];
+            const vi = state.ventaCarrera.findIndex(e => e.mes === mes);
+            if (vi >= 0) state.ventaCarrera[vi] = ventaEntry; else state.ventaCarrera.push(ventaEntry);
+
+            // Guardar en Firestore
+            try {
+                await setDoc(doc(db, 'promoters', user.email), {
+                    reclutamiento: state.reclutamiento,
+                    ventaCarrera: state.ventaCarrera
+                }, { merge: true });
+                const msg = document.getElementById('prpt-msg');
+                if (msg) { msg.style.display='inline-flex'; setTimeout(()=>msg.style.display='none', 2500); }
+            } catch(err) { alert('Error al guardar: ' + err.message); }
+        };
 
         // ─── BOOT ─────────────────────────────────────────────────────────────────────
         window.refreshAll = refreshAll;
@@ -2305,7 +3014,17 @@
         window.refreshCoachFilters = refreshCoachFilters;
         window.refreshChartAgents = refreshChartAgents;
         window.renderCoachReportes = renderCoachReportes;
+        window.tryLoadPromoterReporte = tryLoadPromoterReporte;
+        window.savePromoterReporte = savePromoterReporte;
+        window.handlePromoterReclQ1 = handlePromoterReclQ1;
+        window.handlePromoterVentaQ1 = handlePromoterVentaQ1;
         window.refreshCoachReporteMonthFilter = refreshCoachReporteMonthFilter;
+        window.switchReporteSub = switchReporteSub;
+        window.renderReclutamientoSection = renderReclutamientoSection;
+        window.refreshReclFilters = refreshReclFilters;
+        window.renderVentasSection = renderVentasSection;
+        window.showReclDetail = showReclDetail;
+        window.closeReclDetail = closeReclDetail;
         window.validateDay = validateDay;
         window.ratio = ratio;
         window.destroyChart = destroyChart;
