@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -802,6 +802,11 @@
                 </h1>
                 <p id="coach-display">Promotor: —</p>
                 <p id="team-display" style="font-size:10px; color:var(--gold); font-weight:700;">Equipo: Sin Código</p>
+                <div id="karma-badge" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,rgba(212,175,55,0.18),rgba(212,175,55,0.06));border:1.5px solid rgba(212,175,55,0.5);border-radius:24px;padding:4px 14px 4px 10px;margin-top:4px;cursor:default;">
+                    <span style="font-size:18px;">⭐</span>
+                    <span id="karma-value" style="color:var(--gold);font-weight:800;font-size:20px;letter-spacing:1px;line-height:1;">0</span>
+                    <span style="color:var(--slate);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;">karma</span>
+                </div>
             </div>
             <div class="header-right">
                 <button class="btn btn-sm" onclick="openConfig()"><i class="fa fa-cog"></i> Configuración</button>
@@ -821,6 +826,7 @@
                 Tendencias</button>
             <button class="tab-btn" onclick="switchTab('reporte',this)"><i class="fa fa-file-lines"></i> Reportes de Coaches</button>
             <button class="tab-btn" onclick="switchTab('mi-reporte',this)"><i class="fa fa-clipboard-list"></i> Mi Reporte</button>
+            <button class="tab-btn" onclick="switchTab('tienda',this);initPromotorTienda()"><i class="fa fa-store"></i> Tienda</button>
         </div>
 
         <!-- ═══════════════════════════════ TAB: LEADERBOARD ═══════════════════════════════ -->
@@ -1249,7 +1255,31 @@
 
         </div>
 
-    </div>
+        <!-- ═══════════════════ TAB: TIENDA ═══════════════════ -->
+        <div id="tab-tienda" class="tab-panel">
+            <div class="card" style="margin-bottom:16px;">
+                <p class="card-title"><i class="fa fa-store"></i> Tienda — Canjea tu Karma</p>
+                <p style="font-size:12px;color:var(--slate);margin-bottom:12px;">Selecciona un item y solicita el canje. El director lo aprobará.</p>
+                <div id="tienda-items" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;">
+                    <div class="empty-state"><i class="fa fa-spinner fa-spin"></i> Cargando...</div>
+                </div>
+            </div>
+            <div class="card">
+                <p class="card-title"><i class="fa fa-clock-rotate-left"></i> Mis Solicitudes</p>
+                <div id="tienda-mis-solicitudes" style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;">
+                    <div class="empty-state"><i class="fa fa-inbox"></i> Sin solicitudes aún.</div>
+                </div>
+            </div>
+            <div class="card" style="margin-top:16px;">
+                <p class="card-title"><i class="fa fa-users"></i> Compras de mis Coaches</p>
+                <p style="font-size:12px;color:var(--slate);margin-bottom:12px;">Historial de canjes solicitados por los coaches de tu equipo.</p>
+                <div id="tienda-equipo-solicitudes" style="display:flex;flex-direction:column;gap:8px;max-height:350px;overflow-y:auto;">
+                    <div class="empty-state"><i class="fa fa-spinner fa-spin"></i> Cargando...</div>
+                </div>
+            </div>
+        </div><!-- /tab-tienda -->
+
+    </div><!-- /app -->
 
     <!-- RECL DETAIL MODAL -->
     <div class="modal-overlay" id="recl-detail-modal">
@@ -1344,7 +1374,7 @@
                 <div class="empty-state"><i class="fa fa-inbox"></i> No hay entradas.</div>
             </div>
         </div>
-    </div>
+    </div><!-- /modal-bit-log -->
 
     <script type="module">
         // --- FIREBASE CONFIG ---
@@ -1385,9 +1415,13 @@
             entries: [],
             coaches: [],        // [{email, coachName, agentTeamCode, reportes, reclutamiento}]
             coachesMap: {},     // {email -> coach data}
-            agentCoachMap: {}   // {agentName -> coachEmail}
+            agentCoachMap: {},  // {agentName -> coachEmail}
+            karma: 0,
+            karmaLog: []
         };
         let user = null;
+        let serverNow = null;
+        let pointsConfig = { promotorReportPoints: 1000 };
         let unsubListeners = []; // multiple listeners for each coach team
 
         // ─── AUTH LOGIC ──────────────────────────────────────────────────────────────
@@ -1496,6 +1530,8 @@
                 state.promoterName = data.promoterName || data.coachName || user.displayName || '';
                 state.reclutamiento = data.reclutamiento || [];
                 state.ventaCarrera = data.ventaCarrera || [];
+                state.karma = data.karma || 0;
+                state.karmaLog = data.karmaLog || [];
                 state.teamCode = data.teamCode || '';
                 state.promotorNum = data.promotorNum || null;
                 // promotorCode = what coaches use to link to this promoter
@@ -1682,7 +1718,10 @@
         }
 
         // ─── INIT ─────────────────────────────────────────────────────────────────────
-        window.init = function () {
+        window.init = async function () {
+            serverNow = await getServerTime();
+            await loadPointsConfig();
+            updateKarmaDisplay();
             refreshAll();
             initBitacora();
         }
@@ -1875,6 +1914,7 @@
             if (name === 'leaderboard') renderLeaderboard();
             if (name === 'reporte') renderCoachReportes();
             if (name === 'mi-reporte') tryLoadPromoterReporte();
+            if (name === 'tienda') window.initPromotorTienda();
         }
 
         // ─── CONFIG ──────────────────────────────────────────────────────────────────
@@ -2998,8 +3038,153 @@
                 }, { merge: true });
                 const msg = document.getElementById('prpt-msg');
                 if (msg) { msg.style.display='inline-flex'; setTimeout(()=>msg.style.display='none', 2500); }
+                await awardPromoterKarma(mes);
             } catch(err) { alert('Error al guardar: ' + err.message); }
         };
+
+        // ─── TIENDA ───────────────────────────────────────────────────────────────────
+        window.initPromotorTienda = async function() {
+            await renderPromotorTiendaItems();
+            await renderPromotorMisSolicitudes();
+            await renderPromotorEquipoSolicitudes();
+        };
+
+        async function renderPromotorTiendaItems() {
+            const container = document.getElementById('tienda-items');
+            if (!container) return;
+            try {
+                const snap = await getDoc(doc(db, 'store', 'promotorCatalog'));
+                const items = snap.exists() ? (snap.data().items || []).filter(i => i.activo) : [];
+                if (!items.length) { container.innerHTML = '<div class="empty-state"><i class="fa fa-box-open"></i> Sin items disponibles por ahora.</div>'; return; }
+                container.innerHTML = items.map(item => {
+                    const puedo = (state.karma || 0) >= item.costo;
+                    const sinStock = item.stock === 0;
+                    return `<div style="background:var(--panel2);border-radius:12px;padding:16px;border:1px solid rgba(212,175,55,0.15);display:flex;flex-direction:column;gap:8px;">
+                        <div style="font-size:36px;text-align:center;">${item.emoji||'🎁'}</div>
+                        <div style="font-weight:700;font-size:14px;text-align:center;">${item.nombre}</div>
+                        <div style="font-size:12px;color:var(--slate);text-align:center;">${item.descripcion||''}</div>
+                        <div style="text-align:center;font-weight:800;color:var(--gold);">⭐ ${item.costo} karma</div>
+                        ${item.stock >= 0 ? `<div style="text-align:center;font-size:11px;color:var(--slate);">Stock: ${item.stock}</div>` : ''}
+                        <button class="btn btn-sm ${puedo&&!sinStock?'btn-green':''}" ${(!puedo||sinStock)?'disabled':''} onclick="promotorSolicitarCanje('${item.id}','${item.nombre}',${item.costo},'${item.emoji||'🎁'}','promotorCatalog')">
+                            ${sinStock ? 'Sin stock' : !puedo ? 'Karma insuficiente' : '🛒 Solicitar canje'}
+                        </button>
+                    </div>`;
+                }).join('');
+            } catch(e) { container.innerHTML = '<div class="empty-state">Error cargando tienda.</div>'; }
+        }
+
+        async function renderPromotorMisSolicitudes() {
+            const container = document.getElementById('tienda-mis-solicitudes');
+            if (!container || !user) return;
+            try {
+                const q = query(collection(db, 'redemptionRequests'), where('emailSolicitante', '==', user.email));
+                const snap = await getDocs(q);
+                const reqs = snap.docs.map(d => d.data()).sort((a,b) => (b.fechaSolicitud||'').localeCompare(a.fechaSolicitud||''));
+                container.innerHTML = reqs.length ? reqs.map(r => {
+                    const color = r.status==='approved'?'var(--green)':r.status==='rejected'?'var(--red)':'var(--orange)';
+                    const label = r.status==='approved'?'✓ Aprobado':r.status==='rejected'?'✗ Rechazado':'⏳ Pendiente';
+                    return `<div style="padding:10px 14px;background:var(--panel);border-radius:8px;border-left:3px solid ${color};display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                        <div>
+                            <div style="font-weight:600;font-size:13px;">${r.emoji||'🎁'} ${r.itemNombre}</div>
+                            <div style="font-size:11px;color:var(--slate);">⭐ ${r.costo} karma &nbsp;·&nbsp; ${new Date(r.fechaSolicitud).toLocaleDateString('es-MX')}</div>
+                        </div>
+                        <span style="color:${color};font-size:11px;font-weight:700;white-space:nowrap;">${label}</span>
+                    </div>`;
+                }).join('') : '<div class="empty-state"><i class="fa fa-inbox"></i> Sin solicitudes aún.</div>';
+            } catch(e) {}
+        }
+
+        async function renderPromotorEquipoSolicitudes() {
+            const container = document.getElementById('tienda-equipo-solicitudes');
+            if (!container || !user || !state.promotorCode) {
+                if (container) container.innerHTML = '<div class="empty-state"><i class="fa fa-link-slash"></i> Sin código de promotor configurado.</div>';
+                return;
+            }
+            try {
+                const snap = await getDocs(query(collection(db, 'redemptionRequests'), where('rol', '==', 'coach'), where('promotorCode', '==', state.promotorCode)));
+                const reqs = snap.docs.map(d => d.data()).sort((a,b) => (b.fechaSolicitud||'').localeCompare(a.fechaSolicitud||''));
+                container.innerHTML = reqs.length ? reqs.map(r => {
+                    const color = r.status==='approved'?'var(--green)':r.status==='rejected'?'var(--red)':'var(--orange)';
+                    const label = r.status==='approved'?'✓ Aprobado':r.status==='rejected'?'✗ Rechazado':'⏳ Pendiente';
+                    return `<div style="padding:10px 14px;background:var(--panel);border-radius:8px;border-left:3px solid ${color};display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                        <div>
+                            <div style="font-weight:600;font-size:13px;">${r.emoji||'🎁'} ${r.itemNombre}</div>
+                            <div style="font-size:12px;color:var(--white);margin-top:1px;">${r.nombreSolicitante||r.emailSolicitante}</div>
+                            <div style="font-size:11px;color:var(--slate);">⭐ ${r.costo} karma &nbsp;·&nbsp; ${new Date(r.fechaSolicitud).toLocaleDateString('es-MX')}</div>
+                        </div>
+                        <span style="color:${color};font-size:11px;font-weight:700;white-space:nowrap;">${label}</span>
+                    </div>`;
+                }).join('') : '<div class="empty-state"><i class="fa fa-inbox"></i> Tus coaches aún no han solicitado canjes.</div>';
+            } catch(e) { container.innerHTML = '<div class="empty-state">Error cargando compras del equipo.</div>'; }
+        }
+
+        window.promotorSolicitarCanje = async function(itemId, itemNombre, costo, emoji, catalogDoc) {
+            if ((state.karma || 0) < costo) { alert('Karma insuficiente.'); return; }
+            if (!confirm(`¿Solicitar canje de "${itemNombre}" por ⭐ ${costo} karma? El karma se descontará si el director aprueba.`)) return;
+            try {
+                await addDoc(collection(db, 'redemptionRequests'), {
+                    emailSolicitante: user.email,
+                    nombreSolicitante: state.promoterName || user.displayName || user.email,
+                    rol: 'promotor',
+                    promotorCode: state.promotorCode || '',
+                    itemId, itemNombre, costo, emoji, catalogDoc,
+                    status: 'pending',
+                    fechaSolicitud: new Date().toISOString()
+                });
+                alert(`✅ Solicitud enviada. El director la revisará pronto.`);
+                await renderPromotorMisSolicitudes();
+                await renderPromotorTiendaItems();
+            } catch(e) { alert('Error: ' + e.message); }
+        };
+
+        // ─── KARMA ────────────────────────────────────────────────────────────────────
+        async function getServerTime() {
+            try {
+                const r = await fetch('https://timeapi.io/api/time/current/zone?timeZone=America/Monterrey', { signal: AbortSignal.timeout(3000) });
+                const d = await r.json();
+                return new Date(d.year, d.month - 1, d.day, d.hour, d.minute, d.seconds);
+            } catch {}
+            try {
+                const r = await fetch('https://worldtimeapi.org/api/timezone/America/Monterrey', { signal: AbortSignal.timeout(3000) });
+                const { datetime } = await r.json();
+                return new Date(datetime);
+            } catch {}
+            return new Date();
+        }
+
+        async function loadPointsConfig() {
+            try {
+                const snap = await getDoc(doc(db, 'config', 'pointsConfig'));
+                if (snap.exists()) pointsConfig = { ...pointsConfig, ...snap.data() };
+            } catch (e) {}
+        }
+
+        function updateKarmaDisplay() {
+            const el = document.getElementById('karma-value');
+            if (el) el.textContent = (state.karma || 0).toLocaleString();
+        }
+
+        // Otorga karma al guardar reporte mensual. Solo una vez por mes.
+        async function awardPromoterKarma(mes) {
+            if (!serverNow) return;
+            const now = serverNow;
+            const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+            const currentMes = `${MESES[now.getMonth()]} ${now.getFullYear()}`;
+            const prevDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const prevMes = `${MESES[prevDate.getMonth()]} ${prevDate.getFullYear()}`;
+            if (mes !== currentMes && mes !== prevMes) {
+                alert(`Solo puedes reportar el mes actual (${currentMes}) o el mes anterior (${prevMes}).`);
+                return;
+            }
+            if ((state.karmaLog || []).some(k => k.mes === mes)) return; // ya contabilizado
+            const pts = (pointsConfig && pointsConfig.promotorReportPoints) || 1000;
+            state.karma = (state.karma || 0) + pts;
+            if (!state.karmaLog) state.karmaLog = [];
+            state.karmaLog.push({ mes, points: pts, fecha: new Date().toISOString() });
+            await setDoc(doc(db, 'promoters', user.email), { karma: state.karma, karmaLog: state.karmaLog }, { merge: true });
+            updateKarmaDisplay();
+            alert(`⭐ +${pts} Karma Points por el reporte de ${mes}! Saldo total: ${state.karma}`);
+        }
 
         // ─── BOOT ─────────────────────────────────────────────────────────────────────
         window.refreshAll = refreshAll;
@@ -3016,6 +3201,7 @@
         window.renderCoachReportes = renderCoachReportes;
         window.tryLoadPromoterReporte = tryLoadPromoterReporte;
         window.savePromoterReporte = savePromoterReporte;
+        // tienda functions already assigned to window.* at definition
         window.handlePromoterReclQ1 = handlePromoterReclQ1;
         window.handlePromoterVentaQ1 = handlePromoterVentaQ1;
         window.refreshCoachReporteMonthFilter = refreshCoachReporteMonthFilter;
