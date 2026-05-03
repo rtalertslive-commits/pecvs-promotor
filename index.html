@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PECVS$ — Promotor Analytics v1.3.7</title>
+    <title>PECVS$ — Promotor Analytics</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap"
@@ -148,12 +148,19 @@
             cursor: pointer;
             transition: .25s;
             white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .btn:hover {
-            background: var(--gold);
-            color: var(--bg);
+        /* Hover SOLO en dispositivos con cursor real. Sin esto, el touch en
+           mobile dispara :hover y se queda 'sticky' hasta el proximo tap. */
+        @media (hover: hover) and (pointer: fine) {
+            .btn:hover { background: var(--gold); color: var(--bg); }
+            .btn-green:hover { background: var(--green); color: #fff; }
+            .btn-red:hover { background: var(--red); color: #fff; }
+            .btn-blue:hover { background: var(--blue); color: #fff; }
         }
+
+        .btn:active { transform: scale(0.97); }
 
         .btn.active {
             background: var(--gold);
@@ -165,29 +172,14 @@
             color: var(--green);
         }
 
-        .btn-green:hover {
-            background: var(--green);
-            color: #fff;
-        }
-
         .btn-red {
             border-color: var(--red);
             color: var(--red);
         }
 
-        .btn-red:hover {
-            background: var(--red);
-            color: #fff;
-        }
-
         .btn-blue {
             border-color: var(--blue);
             color: var(--blue);
-        }
-
-        .btn-blue:hover {
-            background: var(--blue);
-            color: #fff;
         }
 
         .btn-sm {
@@ -787,7 +779,7 @@
                 <i class="fa-brands fa-google"></i> Continuar con Google
             </button>
             <div style="margin-top: 25px; font-size: 11px; color: var(--slate); opacity: 0.6;">
-                v1.3.7 — Sincronización mediante Google Firebase
+                <span data-app-version>—</span> · Sincronización mediante Google Firebase
             </div>
         </div>
     </div>
@@ -798,7 +790,7 @@
         <div class="header">
             <div class="header-left">
                 <h1><i class="fa-solid fa-chart-line" style="font-size:22px;margin-right:10px;"></i>PECVS$ Analytics
-                    <small style="font-size:10px; color:var(--slate);">v1.3.7</small>
+                    <small style="font-size:10px; color:var(--slate);" data-app-version>—</small>
                 </h1>
                 <p id="coach-display">Promotor: —</p>
                 <p id="team-display" style="font-size:10px; color:var(--gold); font-weight:700;">Equipo: Sin Código</p>
@@ -827,6 +819,7 @@
             <button class="tab-btn" onclick="switchTab('reporte',this)"><i class="fa fa-file-lines"></i> Reportes de Coaches</button>
             <button class="tab-btn" onclick="switchTab('mi-reporte',this)"><i class="fa fa-clipboard-list"></i> Mi Reporte</button>
             <button class="tab-btn" onclick="switchTab('tienda',this);initPromotorTienda()"><i class="fa fa-store"></i> Tienda</button>
+            <button class="tab-btn" onclick="switchTab('conceptos',this)"><i class="fa fa-lightbulb"></i> Conceptos</button>
         </div>
 
         <!-- ═══════════════════════════════ TAB: LEADERBOARD ═══════════════════════════════ -->
@@ -939,46 +932,32 @@
                     </div>
                 </div>
                 <div class="charts-grid">
-                    <div class="chart-card full">
-                        <h3><i class="fa fa-dollar-sign"></i> Prima Neta por Agente</h3>
-                        <div class="chart-wrap"><canvas id="kpiPrima"></canvas></div>
-                    </div>
-                    <div class="chart-card">
-                        <h3><i class="fa fa-bars-progress"></i> Cierres (V) vs Contactos (P)</h3>
-                        <div class="chart-wrap"><canvas id="kpiVolumen"></canvas></div>
-                    </div>
-                    <div class="chart-card">
-                        <h3><i class="fa fa-bullseye"></i> % Eficiencia: Conversión de P ➔ V (Cierre)</h3>
-                        <div class="chart-wrap"><canvas id="kpiEfectividad"></canvas></div>
-                    </div>
+                    <!-- 1. Volumen PECVS Completo (full width) -->
                     <div class="chart-card full">
                         <h3><i class="fa fa-arrows-to-circle"></i> Volumen PECVS Completo por Agente</h3>
                         <div class="chart-wrap"><canvas id="kpiVolumeFull"></canvas></div>
                     </div>
+                    <!-- 2. Cierres V vs P -->
                     <div class="chart-card">
-                        <h3><i class="fa fa-hand-holding-dollar"></i> Prima Promedio por Cierre ($/V)</h3>
-                        <div class="chart-wrap"><canvas id="kpiPrimaV"></canvas></div>
+                        <h3><i class="fa fa-bars-progress"></i> Cierres (V) vs Contactos (P)</h3>
+                        <div class="chart-wrap"><canvas id="kpiVolumen"></canvas></div>
+                    </div>
+                    <!-- 3-6. Eficiencia (P → V primero, luego embudo en orden) -->
+                    <div class="chart-card">
+                        <h3><i class="fa fa-bullseye"></i> Eficiencia: Conversión P ➔ V (Cierre)</h3>
+                        <div class="chart-wrap"><canvas id="kpiEfectividad"></canvas></div>
                     </div>
                     <div class="chart-card">
-                        <h3><i class="fa fa-money-bill-trend-up"></i> Prima Promedio por Solicitud ($/S)</h3>
-                        <div class="chart-wrap"><canvas id="kpiPrimaS"></canvas></div>
-                    </div>
-                    <!-- FUNNEL RATIOS KPI -->
-                    <div class="chart-card">
-                        <h3><i class="fa fa-percentage"></i> % Eficiencia: Conversión de P ➔ E</h3>
+                        <h3><i class="fa fa-bullseye"></i> Eficiencia: Conversión P ➔ E</h3>
                         <div class="chart-wrap"><canvas id="kpiRatioEP"></canvas></div>
                     </div>
                     <div class="chart-card">
-                        <h3><i class="fa fa-percentage"></i> % Eficiencia: Conversión de E ➔ C</h3>
+                        <h3><i class="fa fa-bullseye"></i> Eficiencia: Conversión E ➔ C</h3>
                         <div class="chart-wrap"><canvas id="kpiRatioCE"></canvas></div>
                     </div>
                     <div class="chart-card">
-                        <h3><i class="fa fa-percentage"></i> % Eficiencia: Conversión de C ➔ V</h3>
+                        <h3><i class="fa fa-bullseye"></i> Eficiencia: Conversión C ➔ V</h3>
                         <div class="chart-wrap"><canvas id="kpiRatioVC"></canvas></div>
-                    </div>
-                    <div class="chart-card">
-                        <h3><i class="fa fa-percentage"></i> % Eficiencia: Conversión de V ➔ S</h3>
-                        <div class="chart-wrap"><canvas id="kpiRatioSV"></canvas></div>
                     </div>
                 </div>
             </div>
@@ -1003,9 +982,10 @@
                     <div>
                         <label class="field-label">Período</label>
                         <select id="chart-period-sel" onchange="renderCharts()">
-                            <option value="12m">Últimos 12 meses</option>
+                            <option value="1m">Mensual (mes actual)</option>
                             <option value="3m">Últimos 3 meses</option>
                             <option value="6m">Últimos 6 meses</option>
+                            <option value="12m">Últimos 12 meses</option>
                             <option value="all">Todo el historial</option>
                         </select>
                     </div>
@@ -1168,11 +1148,6 @@
                         </tr>
                     </tfoot>
                 </table>
-                <div class="save-row" style="justify-content:flex-end;">
-                    <button class="btn btn-sm" onclick="renderBitHistory();document.getElementById('modal-bit-log').classList.add('open')">
-                        <i class="fa fa-list"></i> Ver log (todos los registros)
-                    </button>
-                </div>
             </div>
         </div>
 
@@ -1279,6 +1254,73 @@
             </div>
         </div><!-- /tab-tienda -->
 
+        <!-- ═══════════════════ TAB: CONCEPTOS ═══════════════════ -->
+        <div id="tab-conceptos" class="tab-panel">
+            <div class="card" style="padding: 25px;">
+                <h2 style="font-family:'Playfair Display',serif; color:var(--gold); border-bottom: 2px solid var(--gold); padding-bottom:10px; margin-bottom:25px; font-size:22px;">
+                    <i class="fa fa-graduation-cap-solid"></i> EL EMBUDO DE EFECTIVIDAD
+                </h2>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+                    <!-- COLUMNA DEFINICIONES -->
+                    <div>
+                        <div style="margin-bottom:24px;">
+                            <strong style="color:var(--gold); font-size:1.2em;">P - Contactos del día</strong><br>
+                            <p style="font-size:14px; margin:8px 0; color:var(--white);"><strong>Definición:</strong> Personas buscadas activamente. En abordaje en frío, debes obtener nombre, teléfono, etc. No cuenta un simple saludo superficial.</p>
+                            <em style="color:var(--slate); font-size:12px;">¿Qué mide?: Prospección y abordaje inicial.</em>
+                        </div>
+                        <div style="margin-bottom:24px;">
+                            <strong style="color:var(--gold); font-size:1.2em;">E - Entrevistas</strong><br>
+                            <p style="font-size:14px; margin:8px 0; color:var(--white);"><strong>Definición:</strong> Registra si lograste comunicar el valor del producto según sus necesidades. Si hubo negativa antes de esto, no cuenta.</p>
+                            <em style="color:var(--slate); font-size:12px;">¿Qué mide?: Tu habilidad para detectar necesidades y comunicar valor.</em>
+                        </div>
+                        <div style="margin-bottom:24px;">
+                            <strong style="color:var(--gold); font-size:1.2em;">C - Cotizaciones</strong><br>
+                            <p style="font-size:14px; margin:8px 0; color:var(--white);"><strong>Definición:</strong> Personas a las que entregaste una propuesta formal con costos; si entregaste múltiples propuestas a una misma persona, cuenta como una sola cotización.</p>
+                            <em style="color:var(--slate); font-size:12px;">¿Qué mide?: Tu capacidad para presentar y hablar de PRECIOS.</em>
+                        </div>
+                        <div style="margin-bottom:24px;">
+                            <strong style="color:var(--gold); font-size:1.2em;">V - Personas con cierre</strong><br>
+                            <p style="font-size:14px; margin:8px 0; color:var(--white);"><strong>Definición:</strong> Número de individuos (almas) a los que vendiste; si le vendiste varias solicitudes a la misma persona, cuenta como un solo cierre.</p>
+                            <em style="color:var(--slate); font-size:12px;">¿Qué mide?: Efectividad de cierre y convicción.</em>
+                        </div>
+
+                        <h2 style="font-family:'Playfair Display',serif; color:var(--gold); border-bottom: 2px solid var(--gold); padding-bottom:10px; margin:40px 0 25px; font-size:22px;">
+                            <i class="fa fa-chart-line"></i> MÉTRICAS DE VOLUMEN Y VALOR
+                        </h2>
+
+                        <div style="margin-bottom:24px;">
+                            <strong style="color:var(--gold); font-size:1.2em;">S - Número de solicitudes</strong><br>
+                            <p style="font-size:14px; margin:8px 0; color:var(--white);"><strong>Definición:</strong> Suma de solicitudes vendidas. Aquí SÍ se cuentan todos los folios, ya sean nuevos negocios, incrementos o inclusiones, sin importar si son de la misma persona.</p>
+                            <em style="color:var(--slate); font-size:12px;">¿Qué mide?: Productividad y venta cruzada.</em>
+                        </div>
+                        <div style="margin-bottom:24px;">
+                            <strong style="color:var(--gold); font-size:1.2em;">$ - Prima total</strong><br>
+                            <p style="font-size:14px; margin:8px 0; color:var(--white);"><strong>Definición:</strong> Suma de la Prima Neta total vendida en el día.</p>
+                            <em style="color:var(--slate); font-size:12px;">¿Qué mide?: Rentabilidad financiera.</em>
+                        </div>
+                    </div>
+
+                    <!-- COLUMNA VISUAL -->
+                    <div style="background: rgba(255,255,255,0.03); border-radius:15px; padding:25px; text-align:center; border: 1px solid rgba(255,255,255,0.05); height: fit-content; position: sticky; top: 20px;">
+                        <h2 style="font-family:'Playfair Display',serif; color:var(--white); margin-top:0;">EMBUDO MATEMÁTICO</h2>
+                        <div style="background:var(--gold); color:var(--bg); padding:4px 15px; border-radius:20px; display:inline-block; font-weight:bold; font-size:12px; margin-bottom:30px;">
+                            REGLA: P ≥ E ≥ C ≥ V
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 4px; max-width: 250px; margin: 0 auto; width:100%;">
+                            <div style="width: 100%; height: 45px; background: #3b82f6; clip-path: polygon(0% 0%, 100% 0%, 95% 100%, 5% 100%); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; color:white;">P - Contactos</div>
+                            <div style="width: 100%; height: 45px; background: #06b6d4; clip-path: polygon(5% 0%, 95% 0%, 90% 100%, 10% 100%); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; color:white;">E - Entrevistas</div>
+                            <div style="width: 100%; height: 45px; background: #a855f7; clip-path: polygon(10% 0%, 90% 0%, 85% 100%, 15% 100%); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; color:white;">C - Cotizaciones</div>
+                            <div style="width: 100%; height: 50px; background: #10b981; clip-path: polygon(15% 0%, 85% 0%, 80% 100%, 20% 100%); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; color:white;">V - Cierres</div>
+                        </div>
+                        <p style="font-size:13px; color:var(--slate); margin-top:35px; line-height:1.6; text-align:justify; border-top: 1px solid rgba(255,255,255,0.1); padding-top:20px;">
+                            En sentido estricto el número debe ir de mayor a menor (o como máximo igual) en cada etapa del proceso. Es decir: <strong>nunca puede haber más entrevistas que prospectos contactados</strong>, ni más cotizaciones que entrevistas realizadas, ni más ventas concretadas que cotizaciones.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div><!-- /tab-conceptos -->
+
     </div><!-- /app -->
 
     <!-- RECL DETAIL MODAL -->
@@ -1291,6 +1333,45 @@
             <div id="recl-detail-header" style="font-size:12px; color:var(--slate); margin-bottom:16px;"></div>
             <div id="recl-detail-content" style="display:flex; flex-direction:column; gap:12px; font-size:14px; line-height:1.6;"></div>
             <button class="btn btn-sm" style="margin-top:20px; width:100%;" onclick="closeReclDetail()">Cerrar</button>
+        </div>
+    </div>
+
+    <!-- LOGOUT CONFIRMATION MODAL -->
+    <div class="modal-overlay" id="logout-confirm-modal" onclick="if(event.target===this)cancelLogout()">
+        <div class="modal-box" style="max-width:340px;text-align:center;">
+            <div style="font-size:42px;margin-bottom:8px;">👋</div>
+            <h2 style="font-family:'Inter',sans-serif;font-weight:800;color:var(--white);margin:0 0 8px;font-size:18px;">¿Cerrar sesión?</h2>
+            <p style="color:var(--slate);font-size:13px;margin:0 0 20px;">Tendrás que volver a entrar con Google la próxima vez.</p>
+            <div style="display:flex;gap:10px;">
+                <button class="btn btn-sm" style="flex:1;" onclick="cancelLogout()">Cancelar</button>
+                <button class="btn btn-sm btn-red" style="flex:1;" onclick="confirmLogout()">Cerrar sesión</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- UPDATE AVAILABLE MODAL -->
+    <div class="modal-overlay" id="update-available-modal">
+        <div class="modal-box" style="max-width:340px;text-align:center;">
+            <div style="font-size:48px;margin-bottom:8px;">🚀</div>
+            <h2 style="font-family:'Inter',sans-serif;font-weight:800;color:var(--white);margin:0 0 8px;font-size:18px;">Nueva versión disponible</h2>
+            <p style="color:var(--slate);font-size:13px;margin:0 0 20px;line-height:1.5;">Recargá la app para obtener las últimas mejoras y arreglos.</p>
+            <div style="display:flex;gap:10px;">
+                <button class="btn btn-sm" style="flex:1;" onclick="dismissUpdate()">Después</button>
+                <button class="btn btn-sm btn-green" style="flex:1;" onclick="applyUpdate()">Recargar ahora</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CANJE CONFIRMATION MODAL -->
+    <div class="modal-overlay" id="canje-confirm-modal" onclick="if(event.target===this)cancelCanje()">
+        <div class="modal-box" style="max-width:380px;text-align:center;">
+            <div style="font-size:42px;margin-bottom:8px;">🛒</div>
+            <h2 style="font-family:'Inter',sans-serif;font-weight:800;color:var(--white);margin:0 0 12px;font-size:18px;">Confirmar canje</h2>
+            <p id="canje-confirm-text" style="color:var(--slate);font-size:13px;margin:0 0 20px;line-height:1.5;"></p>
+            <div style="display:flex;gap:10px;">
+                <button class="btn btn-sm" style="flex:1;" onclick="cancelCanje()">Cancelar</button>
+                <button class="btn btn-sm btn-green" style="flex:1;" onclick="confirmCanje()">Solicitar</button>
+            </div>
         </div>
     </div>
 
@@ -1308,6 +1389,12 @@
                 <div>
                     <label style="font-size:11px; color:var(--slate); font-weight:700; display:block; margin-bottom:6px;">TU CLAVE DE AGENTE (4 dígitos)</label>
                     <input type="text" id="reg-code" placeholder="Ej. 1234" maxlength="4" inputmode="numeric" style="width:100%; letter-spacing:6px; font-size:18px; font-weight:700; text-align:center;">
+                </div>
+                <div>
+                    <label style="font-size:11px; color:var(--slate); font-weight:700; display:block; margin-bottom:6px;">TU REGIÓN</label>
+                    <select id="reg-region" style="width:100%; padding:10px; background:var(--panel); color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:8px; font-size:14px;">
+                        <option value="">Cargando regiones...</option>
+                    </select>
                 </div>
             </div>
             <div style="background:rgba(212,175,55,0.1); border:1px solid rgba(212,175,55,0.3); border-radius:8px; padding:12px; font-size:12px; color:var(--gold-l); margin-bottom:20px; text-align:left; line-height:1.6;">
@@ -1344,37 +1431,47 @@
     <div class="modal-overlay" id="config-modal">
         <div class="modal-box">
             <button class="modal-close" onclick="closeConfig()">&times;</button>
-            <h2><i class="fa fa-cog"></i> Configuración</h2>
-            <div style="display:flex;flex-direction:column;gap:20px;">
-                <div>
-                    <label class="field-label">Nombre del Promotor</label>
-                    <input type="text" id="inp-coach" placeholder="Tu nombre">
+            <h2><i class="fa fa-cog"></i> Mi Perfil</h2>
+            <p style="font-size:11px; color:var(--slate); margin:0 0 15px;">Si algún dato está incorrecto, contacta al director para que lo corrija.</p>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+                <div style="background:rgba(212,175,55,0.07); border:1px solid rgba(212,175,55,0.2); border-radius:10px; padding:12px 14px;">
+                    <label class="field-label" style="margin-bottom:6px; display:block;">NOMBRE DEL PROMOTOR</label>
+                    <span id="disp-myname" style="font-size:16px; font-weight:700; color:#fff;">—</span>
                 </div>
                 <div style="background:rgba(212,175,55,0.07); border:1px solid rgba(212,175,55,0.2); border-radius:10px; padding:12px 14px;">
                     <label class="field-label" style="margin-bottom:6px; display:block;">MI CLAVE DE PROMOTOR</label>
                     <span id="disp-mycode" style="font-size:22px; font-weight:800; color:var(--gold); letter-spacing:6px;">—</span>
-                    <p style="font-size:10px; color:var(--slate); margin:4px 0 0;">Asignada por el director. Tus coaches se vinculan automáticamente con esta clave.</p>
+                    <p style="font-size:10px; color:var(--slate); margin:4px 0 0;">Tus coaches se vinculan automáticamente con esta clave.</p>
+                </div>
+                <div style="background:rgba(212,175,55,0.07); border:1px solid rgba(212,175,55,0.2); border-radius:10px; padding:12px 14px;">
+                    <label class="field-label" style="margin-bottom:6px; display:block;">MI REGIÓN</label>
+                    <span id="disp-myregion" style="font-size:16px; font-weight:700; color:#fff;">—</span>
                 </div>
                 <div>
                     <p class="section-label">Coaches en tu Equipo</p>
                     <div class="agent-list" id="agent-list"></div>
                 </div>
-                <button class="btn btn-green" onclick="saveConfig()"><i class="fa fa-floppy-disk"></i>Guardar
-                    configuración</button>
             </div>
         </div>
     </div>
 
-    <!-- BITÁCORA LOG MODAL -->
-    <div class="modal-overlay" id="modal-bit-log">
-        <div class="modal-box" style="max-width:600px;">
-            <button class="modal-close" onclick="document.getElementById('modal-bit-log').classList.remove('open')">&times;</button>
-            <h2><i class="fa fa-clock-rotate-left"></i> Log de Transacciones (Bitácora)</h2>
-            <div id="bit-history-grid" style="display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto;">
-                <div class="empty-state"><i class="fa fa-inbox"></i> No hay entradas.</div>
-            </div>
-        </div>
-    </div><!-- /modal-bit-log -->
+
+    <script>
+        // Sync versión de la app desde sw.js (single source of truth).
+        (async () => {
+            try {
+                const r = await fetch('./sw.js', { cache: 'no-cache' });
+                const text = await r.text();
+                const match = text.match(/CACHE_NAME\s*=\s*['"`][^'"`]*?v(\d+\.\d+\.\d+)['"`]/);
+                if (!match) return;
+                const v = 'v' + match[1];
+                document.title = 'PECVS$ — Promotor Analytics ' + v;
+                document.querySelectorAll('[data-app-version]').forEach(el => {
+                    el.textContent = v;
+                });
+            } catch (e) {}
+        })();
+    </script>
 
     <script type="module">
         // --- FIREBASE CONFIG ---
@@ -1390,7 +1487,7 @@
         // --- IMPORT FIREBASE ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, getDocs, addDoc, collection, query, where, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         // Initialize
         const app = initializeApp(firebaseConfig);
@@ -1411,11 +1508,15 @@
             teamCode: '',      // code linking promoter → director (TEAM-DIRECTOR)
             promotorCode: '',  // code promoter shares with coaches (TEAM-PROMOTOR-X)
             promotorNum: null,
+            companyCode: '',
+            directorCode: '',  // multi-tenant: código del director
+            regionName: '',
             agents: [],
             entries: [],
             coaches: [],        // [{email, coachName, agentTeamCode, reportes, reclutamiento}]
             coachesMap: {},     // {email -> coach data}
             agentCoachMap: {},  // {agentName -> coachEmail}
+            embeddedCoaches: [], // fallback cache from promoter doc
             karma: 0,
             karmaLog: []
         };
@@ -1430,7 +1531,47 @@
         });
 
         window.logout = function () {
-            if (confirm("¿Cerrar sesión?")) signOut(auth);
+            // Modal custom — confirm() nativo no se ve bien dentro de PWA standalone iOS
+            document.getElementById('logout-confirm-modal').classList.add('open');
+        };
+        window.confirmLogout = function () {
+            document.getElementById('logout-confirm-modal').classList.remove('open');
+            signOut(auth).then(() => location.reload());
+        };
+        window.cancelLogout = function () {
+            document.getElementById('logout-confirm-modal').classList.remove('open');
+        };
+
+        // Update prompt modal (reemplaza confirm() del SW)
+        let _updateModalShown = false;
+        window.showUpdateModal = function () {
+            if (_updateModalShown) return;
+            _updateModalShown = true;
+            document.getElementById('update-available-modal').classList.add('open');
+        };
+        window.applyUpdate = function () { location.reload(); };
+        window.dismissUpdate = function () {
+            document.getElementById('update-available-modal').classList.remove('open');
+        };
+
+        // Canje confirm modal (reemplaza confirm() de promotorSolicitarCanje)
+        let _pendingCanje = null;
+        window.openCanjeConfirm = function (itemId, itemNombre, costo, emoji, catalogDoc) {
+            _pendingCanje = { itemId, itemNombre, costo, emoji, catalogDoc };
+            document.getElementById('canje-confirm-text').textContent =
+                `¿Solicitar canje de "${itemNombre}" por 🌮 ${costo} tacos? Se descontarán si el director aprueba.`;
+            document.getElementById('canje-confirm-modal').classList.add('open');
+        };
+        window.confirmCanje = async function () {
+            const c = _pendingCanje;
+            document.getElementById('canje-confirm-modal').classList.remove('open');
+            _pendingCanje = null;
+            if (!c) return;
+            await window._doSolicitarCanje(c.itemId, c.itemNombre, c.costo, c.emoji, c.catalogDoc);
+        };
+        window.cancelCanje = function () {
+            document.getElementById('canje-confirm-modal').classList.remove('open');
+            _pendingCanje = null;
         };
 
         window.doSignOut = function () {
@@ -1439,11 +1580,20 @@
 
         onAuthStateChanged(auth, async (u) => {
             if (u) {
+                // Detectar cambio de usuario y forzar recarga (evita data leak en memoria)
+                const lastEmail = sessionStorage.getItem('lastPromEmail');
+                if (lastEmail && lastEmail !== u.email) {
+                    sessionStorage.setItem('lastPromEmail', u.email);
+                    location.reload();
+                    return;
+                }
+                sessionStorage.setItem('lastPromEmail', u.email);
                 user = u;
                 const status = await checkUserStatus();
                 if (status === 'active') {
                     document.getElementById('login-overlay').classList.add('hidden');
                     await loadPromoterData();
+                    startPromoterDocListener(); // real-time updates desde Firestore
                     init();
                 } else if (status === 'inactive') {
                     document.getElementById('login-overlay').classList.add('hidden');
@@ -1455,6 +1605,7 @@
                     document.getElementById('login-overlay').classList.add('hidden');
                     document.getElementById('register-overlay').style.display = 'flex';
                     if (u.displayName) document.getElementById('reg-name').value = u.displayName;
+                    loadRegionsDropdown();
                 }
             } else {
                 user = null;
@@ -1479,11 +1630,29 @@
             return 'new';
         }
 
+        async function loadRegionsDropdown() {
+            const sel = document.getElementById('reg-region');
+            if (!sel) return;
+            try {
+                const snap = await getDocs(collection(db, 'directors'));
+                const regions = [];
+                snap.forEach(d => {
+                    const data = d.data();
+                    if (data.status !== 'inactive' && data.regionName) regions.push(data.regionName);
+                });
+                const unique = [...new Set(regions)].sort();
+                sel.innerHTML = '<option value="">-- Selecciona tu región --</option>' +
+                    unique.map(r => `<option value="${r}">${r}</option>`).join('');
+            } catch(e) { sel.innerHTML = '<option value="">(Error cargando)</option>'; }
+        }
+
         window.submitRegistration = async function () {
             const name = document.getElementById('reg-name').value.trim();
             const code = document.getElementById('reg-code').value.trim();
+            const region = document.getElementById('reg-region').value;
             if (!name) { alert('Por favor ingresa tu nombre completo.'); return; }
             if (!/^\d{4}$/.test(code)) { alert('La clave de agente debe ser exactamente 4 dígitos numéricos.'); return; }
+            if (!region) { alert('Por favor selecciona tu región.'); return; }
             const btn = document.getElementById('reg-submit-btn');
             btn.disabled = true;
             btn.textContent = 'Enviando...';
@@ -1492,6 +1661,7 @@
                     name,
                     email: user.email,
                     companyCode: code,
+                    region: region,
                     timestamp: new Date().toISOString()
                 });
                 document.getElementById('register-overlay').style.display = 'none';
@@ -1507,22 +1677,34 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js').then(reg => {
-                    reg.onupdatefound = () => {
+                    // Modal custom + addEventListener (más robusto que asignación directa)
+                    reg.addEventListener('updatefound', () => {
                         const newSW = reg.installing;
-                        newSW.onstatechange = () => {
+                        if (!newSW) return;
+                        newSW.addEventListener('statechange', () => {
                             if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
-                                if (confirm('Nueva versión disponible (v1.3.7). ¿Recargar ahora para actualizar?')) {
-                                    window.location.reload();
-                                }
+                                showUpdateModal();
                             }
-                        };
-                    };
+                        });
+                    });
+                    // Force check de updates al volver foco + cada hora
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.visibilityState === 'visible') reg.update().catch(() => {});
+                    });
+                    setInterval(() => reg.update().catch(() => {}), 60 * 60 * 1000);
                 }).catch(err => console.error('SW registration failed:', err));
             });
         }
 
         async function loadPromoterData() {
             if (!user) return;
+            // Limpiar arrays para evitar leak entre cuentas
+            state.coaches = [];
+            state.coachesMap = {};
+            state.agents = [];
+            state.agentCoachMap = {};
+            state.entries = [];
+            state.embeddedCoaches = [];
             const docRef = doc(db, "promoters", user.email);
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
@@ -1533,11 +1715,13 @@
                 state.karma = data.karma || 0;
                 state.karmaLog = data.karmaLog || [];
                 state.teamCode = data.teamCode || '';
+                state.companyCode = data.companyCode || '';
                 state.promotorNum = data.promotorNum || null;
                 // promotorCode = what coaches use to link to this promoter
                 state.promotorCode = data.promotorCode || (state.promotorNum ? 'TEAM-PROMOTOR-' + state.promotorNum : '');
                 // directorCode = what the promoter enters to link to their director
                 state.directorCode = data.directorCode || '';
+                state.regionName = data.regionName || '';
                 // Store the embedded coaches array as fallback (from hierarchy loader)
                 state.embeddedCoaches = Array.isArray(data.coaches) ? data.coaches : [];
                 document.getElementById('team-display').textContent = 'Mi código: ' + (state.promotorCode || state.teamCode || 'Sin Código');
@@ -1547,6 +1731,51 @@
                 state.promoterName = user.displayName || '';
                 openConfig();
             }
+        }
+
+        // ─── REAL-TIME LISTENER del doc del promotor ────────────────────────────
+        // Escucha cambios en promoters/{email}: el director puede aprobar/rechazar canjes,
+        // mintar/quemar tacos via Tesorería, reasignar director, marcar inactive, etc.
+        // Sin este listener el promotor no se enteraba hasta cerrar y reabrir.
+        let _promoterDocUnsubscribe = null;
+        function startPromoterDocListener() {
+            if (!user) return;
+            if (_promoterDocUnsubscribe) { _promoterDocUnsubscribe(); _promoterDocUnsubscribe = null; }
+
+            _promoterDocUnsubscribe = onSnapshot(doc(db, "promoters", user.email), (snap) => {
+                if (!snap.exists()) return;
+                const fresh = snap.data();
+                let karmaChanged = false;
+
+                if (typeof fresh.karma === 'number' && fresh.karma !== state.karma) {
+                    state.karma = fresh.karma;
+                    karmaChanged = true;
+                }
+                if (Array.isArray(fresh.karmaLog) && fresh.karmaLog.length !== (state.karmaLog || []).length) {
+                    state.karmaLog = fresh.karmaLog;
+                    karmaChanged = true;
+                }
+                // Reflejar campos admin en local (NO los escribimos via savePromoterData)
+                ['promoterName','teamCode','promotorCode','directorCode','regionName','companyCode','status','type'].forEach(k => {
+                    if (fresh[k] !== undefined && fresh[k] !== state[k]) state[k] = fresh[k];
+                });
+
+                if (karmaChanged && typeof updateKarmaDisplay === 'function') updateKarmaDisplay();
+
+                // Status change → mostrar revoked overlay
+                if (fresh.status === 'inactive' || fresh.status === 'revoked') {
+                    const overlay = document.getElementById('revoked-overlay');
+                    if (overlay) overlay.style.display = 'flex';
+                }
+
+                // Refresh tienda solicitudes si está activa
+                const tiendaActive = document.getElementById('tab-tienda')?.classList.contains('active');
+                if (tiendaActive) {
+                    try { renderPromotorMisSolicitudes(); } catch(e) {}
+                }
+            }, (err) => {
+                console.error('[promoterDocListener]', err);
+            });
         }
 
         async function savePromoterData() {
@@ -1737,7 +1966,7 @@
             if (!sel) return;
             const prev = sel.value;
             sel.innerHTML = '<option value="">— Todos los coaches —</option>' +
-                state.coaches.map(c => `<option value="${c.email}">${c.coachName || c.email}</option>`).join('');
+                state.coaches.map(c => `<option value="${escapeHtml(c.email)}">${escapeHtml(c.coachName || c.email)}</option>`).join('');
             if (prev) sel.value = prev;
             refreshBitAgentSelect();
         }
@@ -1750,7 +1979,7 @@
                 ? getBitAgentList().filter(a => getBitAgentCoach(a) === coachF)
                 : getBitAgentList();
             sel.innerHTML = '<option value="">— Selecciona agente —</option>' +
-                agents.map(a => `<option value="${a}">${a}</option>`).join('');
+                agents.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join('');
             sel.value = agents.includes(prev) ? prev : '';
             autoLoadBit();
         };
@@ -1847,6 +2076,7 @@
 
         window.renderBitHistory = function () {
             const grid = document.getElementById('bit-history-grid');
+            if (!grid) return; // modal de log eliminado, no hay grid que poblar
             const coachF = document.getElementById('bit-coach-filter').value;
             const agentF = document.getElementById('bit-agent').value;
             let filtered = state.entries;
@@ -1859,9 +2089,9 @@
             grid.innerHTML = filtered.map(e => {
                 const origIdx = state.entries.indexOf(e);
                 return `<div class="history-chip" onclick="loadBitEntry(${origIdx})">
-                  <span style="font-weight:700;color:var(--gold)">${e.agent}</span>
-                  <span style="color:var(--slate)">${e.mes} · Sem ${e.semana}</span>
-                  <span style="color:var(--teal);font-size:11px;">P:${e.totales?.P||0} E:${e.totales?.E||0} V:${e.totales?.V||0}</span>
+                  <span style="font-weight:700;color:var(--gold)">${escapeHtml(e.agent)}</span>
+                  <span style="color:var(--slate)">${escapeHtml(e.mes)} · Sem ${escapeHtml(e.semana)}</span>
+                  <span style="color:var(--teal);font-size:11px;">P:${Number(e.totales?.P)||0} E:${Number(e.totales?.E)||0} V:${Number(e.totales?.V)||0}</span>
                 </div>`;
             }).join('');
         };
@@ -1879,7 +2109,8 @@
             }
             document.getElementById('bit-semana').value = e.semana;
             autoLoadBit();
-            document.getElementById('modal-bit-log').classList.remove('open');
+            const m = document.getElementById('modal-bit-log');
+            if (m) m.classList.remove('open'); // modal eliminado, defensivo
         };
 
         function initBitacora() {
@@ -1919,10 +2150,12 @@
 
         // ─── CONFIG ──────────────────────────────────────────────────────────────────
         window.openConfig = function () {
-            const inpCoach = document.getElementById('inp-coach');
-            if (inpCoach) inpCoach.value = state.promoterName || '';
+            const nameEl = document.getElementById('disp-myname');
             const codeEl = document.getElementById('disp-mycode');
-            if (codeEl) codeEl.textContent = state.companyCode || state.promotorCode || '—';
+            const regionEl = document.getElementById('disp-myregion');
+            if (nameEl)   nameEl.textContent   = state.promoterName || '—';
+            if (codeEl)   codeEl.textContent   = state.companyCode || state.promotorCode || '—';
+            if (regionEl) regionEl.textContent = state.regionName || '—';
             renderCoachList();
             document.getElementById('config-modal').classList.add('open');
         }
@@ -1935,42 +2168,10 @@
             if (!state.coaches.length) { el.innerHTML = '<div style="color:var(--slate);font-size:11px;padding:8px 0;">No hay coaches vinculados con este código de equipo todavía.</div>'; return; }
             el.innerHTML = state.coaches.map((c) => `
                 <div class="agent-chip" style="justify-content:space-between; padding:10px 15px;">
-                    <span style="font-weight:600;"><i class="fa fa-user-tie" style="color:var(--gold); margin-right:8px;"></i>${c.coachName}</span>
-                    <span style="font-size:9px; color:var(--slate); text-transform:uppercase; letter-spacing:1px;">${c.email}</span>
+                    <span style="font-weight:600;"><i class="fa fa-user-tie" style="color:var(--gold); margin-right:8px;"></i>${escapeHtml(c.coachName)}</span>
+                    <span style="font-size:9px; color:var(--slate); text-transform:uppercase; letter-spacing:1px;">${escapeHtml(c.email)}</span>
                 </div>
             `).join('');
-        }
-
-        window.saveConfig = async function () {
-            try {
-                // Determine source element to show loading state if possible
-                const btn = (window.event && window.event.target && window.event.target.tagName === 'BUTTON') ? window.event.target : null;
-                const oldHtml = btn ? btn.innerHTML : '';
-                if (btn) {
-                    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Guardando...';
-                    btn.disabled = true;
-                }
-
-                state.promoterName = document.getElementById('inp-coach').value.trim();
-
-                await saveState();
-                startListeningCoaches();
-                refreshAll();
-
-                if (btn) {
-                    btn.innerHTML = '<i class="fa fa-check"></i> ¡Guardado!';
-                    setTimeout(() => {
-                        btn.innerHTML = oldHtml;
-                        btn.disabled = false;
-                        closeConfig();
-                    }, 1000);
-                } else {
-                    closeConfig();
-                }
-            } catch (err) {
-                console.error("Error saving promoter:", err);
-                alert("Error al guardar: " + err.message);
-            }
         }
 
         function refreshCoachFilters() {
@@ -1978,7 +2179,7 @@
             const opts = state.coaches
                 .slice()
                 .sort((a, b) => (a.coachName || '').localeCompare(b.coachName || ''))
-                .map(c => `<option value="${c.email}">${c.coachName}</option>`).join('');
+                .map(c => `<option value="${escapeHtml(c.email)}">${escapeHtml(c.coachName)}</option>`).join('');
 
             ['lb-coach-filter', 'kpi-coach-sel', 'chart-coach-sel', 'rpt-coach-filter'].forEach(id => {
                 const el = document.getElementById(id);
@@ -2000,7 +2201,7 @@
             const opts = agentsForCoach
                 .slice()
                 .sort((a, b) => a.localeCompare(b))
-                .map(a => `<option value="${a}">${a}</option>`).join('');
+                .map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join('');
             const el = document.getElementById('chart-agent-sel');
             if (!el) return;
             const cur = el.value;
@@ -2093,7 +2294,8 @@
         }
 
         // ─── LEADERBOARD ──────────────────────────────────────────────────────────────
-        function ratio(a, b) { return b > 0 ? (a / b).toFixed(2) : '—'; }
+        function ratio(a, b) { return b > 0 ? (a / b).toFixed(2) : '—'; } // mantenido para primas ($/V, $/S)
+        function ratioPct(a, b) { return b > 0 ? ((a / b) * 100).toFixed(1) + '%' : '—'; } // % para conversiones
 
         let showRedData = false;
         function toggleRed() {
@@ -2199,9 +2401,14 @@
             const tfoot = document.getElementById('lb-foot');
 
             if (!agents.length) {
-                tbody.innerHTML = `<tr class="no-data-row"><td colspan="${showRedData ? 20 : 17}">No hay datos con los filtros actuales.</td></tr>`;
+                tbody.innerHTML = `<tr class="no-data-row"><td colspan="${showRedData ? 21 : 18}">No hay datos con los filtros actuales.</td></tr>`;
                 tfoot.innerHTML = ''; return;
             }
+
+            // Pre-calc team totals para usar en cada fila
+            const _totPrima = agents.reduce((s, ag) => s + agMap[ag].prima, 0);
+            const _primaPerAgent = agents.length > 0 ? _totPrima / agents.length : 0;
+            const primaPerAgentFmt = _primaPerAgent.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
             // Dynamic Header
             thead.innerHTML = `
@@ -2211,14 +2418,15 @@
                     <th colspan="5" style="border-left:2px solid #475569;border-bottom:1px solid #475569">Volumen PECVS$</th>
                     <th colspan="4" style="border-left:2px solid #475569;border-bottom:1px solid #475569">Ratios PECVS</th>
                     <th colspan="2" style="border-left:2px solid #475569;border-bottom:1px solid #475569">Ratios</th>
-                    <th colspan="3" style="border-left:2px solid #475569;border-bottom:1px solid #475569">Prima promedio ($)</th>
+                    <th rowspan="2" style="border-left:2px solid #475569;color:var(--green);">Prima Neta ($)</th>
+                    <th colspan="3" style="border-left:2px solid #475569;border-bottom:1px solid #475569">Promedios en base a $</th>
                     ${showRedData ? `<th colspan="3" style="border-left:2px solid var(--red);border-bottom:1px solid var(--red);background:rgba(239,68,68,0.1)">RECONCILIACIÓN (🔴 + 🟢)</th>` : ''}
                 </tr>
                 <tr>
                     <th style="border-left:2px solid #475569">P</th><th>E</th><th>C</th><th>V</th><th>S</th>
                     <th style="border-left:2px solid #475569">P/E</th><th>E/C</th><th>C/V</th><th>S/V</th>
                     <th style="border-left:2px solid #475569">P/V</th><th>P/S</th>
-                    <th style="border-left:2px solid #475569">Neta</th><th>$/V</th><th>$/S</th>
+                    <th style="border-left:2px solid #475569">$/V</th><th>$/S</th><th>$/Integrante</th>
                     ${showRedData ? `
                     <th style="border-left:2px solid var(--red);color:var(--red)">S (R)</th>
                     <th style="color:var(--red)">$ (R)</th>
@@ -2236,17 +2444,18 @@
                 const totalPrimaFmt = (d.prima + d.redPrima).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 return `<tr>
                     <td class="rank-num">${i + 1}</td>
-                    <td class="agent-name-cell">${ag}</td>
+                    <td class="agent-name-cell">${escapeHtml(ag)}</td>
                     <td style="border-left:2px solid #475569">${d.P}</td><td>${d.E}</td><td>${d.C}</td><td>${d.V}</td><td>${d.S}</td>
-                    <td class="ratio-cell" style="border-left:2px solid #475569">${ratio(d.E, d.P)}</td>
-                    <td class="ratio-cell">${ratio(d.C, d.E)}</td>
-                    <td class="ratio-cell">${ratio(d.V, d.C)}</td>
-                    <td class="ratio-cell">${ratio(d.S, d.V)}</td>
-                    <td class="ratio-cell" style="border-left:2px solid #475569">${ratio(d.V, d.P)}</td>
-                    <td class="ratio-cell">${ratio(d.S, d.P)}</td>
+                    <td class="ratio-cell" style="border-left:2px solid #475569">${ratioPct(d.E, d.P)}</td>
+                    <td class="ratio-cell">${ratioPct(d.C, d.E)}</td>
+                    <td class="ratio-cell">${ratioPct(d.V, d.C)}</td>
+                    <td class="ratio-cell">${ratioPct(d.S, d.V)}</td>
+                    <td class="ratio-cell" style="border-left:2px solid #475569">${ratioPct(d.V, d.P)}</td>
+                    <td class="ratio-cell">${ratioPct(d.S, d.P)}</td>
                     <td style="font-weight:700;color:var(--green);border-left:2px solid #475569">$${primaFmt}</td>
-                    <td class="ratio-cell">${ratio(d.prima, d.V)}</td>
-                    <td class="ratio-cell">${ratio(d.prima, d.S)}</td>
+                    <td class="ratio-cell" style="border-left:2px solid #475569">${d.V > 0 ? '$' + ratio(d.prima, d.V) : '—'}</td>
+                    <td class="ratio-cell">${d.S > 0 ? '$' + ratio(d.prima, d.S) : '—'}</td>
+                    <td class="ratio-cell" style="color:var(--gold-l);">$${primaPerAgentFmt}</td>
                     ${showRedData ? `
                     <td style="border-left:2px solid var(--red);color:var(--red);opacity:0.8">${d.redS}</td>
                     <td style="color:var(--red);opacity:0.8">$${redPrimaFmt}</td>
@@ -2270,11 +2479,12 @@
             tfoot.innerHTML = `<tr>
                 <td></td><td style="text-align:left;font-weight:800;">EQUIPO TOTAL</td>
                 <td style="border-left:2px solid #475569">${tot.P}</td><td>${tot.E}</td><td>${tot.C}</td><td>${tot.V}</td><td>${tot.S}</td>
-                <td style="border-left:2px solid #475569">${ratio(tot.E, tot.P)}</td><td>${ratio(tot.C, tot.E)}</td>
-                <td>${ratio(tot.V, tot.C)}</td><td>${ratio(tot.S, tot.V)}</td>
-                <td style="border-left:2px solid #475569">${ratio(tot.V, tot.P)}</td><td>${ratio(tot.S, tot.P)}</td>
+                <td style="border-left:2px solid #475569">${ratioPct(tot.E, tot.P)}</td><td>${ratioPct(tot.C, tot.E)}</td>
+                <td>${ratioPct(tot.V, tot.C)}</td><td>${ratioPct(tot.S, tot.V)}</td>
+                <td style="border-left:2px solid #475569">${ratioPct(tot.V, tot.P)}</td><td>${ratioPct(tot.S, tot.P)}</td>
                 <td style="font-weight:800;color:var(--gold);border-left:2px solid #475569">$${totPrima}</td>
-                <td>${ratio(tot.prima, tot.V)}</td><td>${ratio(tot.prima, tot.S)}</td>
+                <td style="border-left:2px solid #475569">${tot.V > 0 ? '$' + ratio(tot.prima, tot.V) : '—'}</td><td>${tot.S > 0 ? '$' + ratio(tot.prima, tot.S) : '—'}</td>
+                <td></td>
                 ${showRedData ? `
                 <td style="border-left:2px solid var(--red);color:var(--red)">${tot.redS}</td>
                 <td style="color:var(--red)">$${totRedPrima}</td>
@@ -2315,7 +2525,15 @@
 
             let filtered = baseEntries;
             if (latestDate) {
-                if (period === '12m') {
+                if (period === '1m') {
+                    // Solo el mes más reciente con datos
+                    filtered = baseEntries.filter(e => {
+                        const [mes, year] = e.mes.split(' ');
+                        const monthIdx = MONTHS_ES.indexOf(mes) + 1;
+                        const entryDate = new Date(parseInt(year), monthIdx - 1, 1);
+                        return entryDate.getTime() === latestDate.getTime();
+                    });
+                } else if (period === '12m') {
                     const last12Months = new Date(latestDate.getFullYear(), latestDate.getMonth() - 11, 1);
                     filtered = baseEntries.filter(e => {
                         const [mes, year] = e.mes.split(' ');
@@ -2403,7 +2621,8 @@
             });
 
             // Helper: compute ratio series per label
-            function ratioSeries(numCol, denCol, color, lbl) {
+            // asPct = true → multiplica por 100 para porcentaje
+            function ratioSeries(numCol, denCol, color, lbl, asPct = false) {
                 return {
                     label: lbl,
                     data: labelSet.map(lk => {
@@ -2411,39 +2630,41 @@
                         const seg = entries.filter(e => e.mes === m && e.semana == s);
                         const num = seg.reduce((sum, e) => sum + (numCol === 'prima' ? e.totales.prima : e.totales[numCol]), 0);
                         const den = seg.reduce((sum, e) => sum + (denCol === 'prima' ? e.totales.prima : e.totales[denCol]), 0);
-                        return den > 0 ? parseFloat((num / den).toFixed(3)) : null;
+                        if (den === 0) return null;
+                        const v = num / den;
+                        return asPct ? parseFloat((v * 100).toFixed(1)) : parseFloat(v.toFixed(2));
                     }),
                     borderColor: color, backgroundColor: color + '22', tension: .4, fill: false, pointRadius: 4
                 };
             }
 
-            // Embudo ratios: P/E, E/C, C/V
+            // Embudo ratios: P→E, E→C, C→V (porcentajes)
             destroyChart('ratios');
             const ctxR = document.getElementById('chartRatios').getContext('2d');
             charts['ratios'] = new Chart(ctxR, {
                 type: 'line',
                 data: {
                     labels, datasets: [
-                        ratioSeries('E', 'P', '#06b6d4', '% Eficiencia: Conversión de P ➔ E'),
-                        ratioSeries('C', 'E', '#a855f7', '% Eficiencia: Conversión de E ➔ C'),
-                        ratioSeries('V', 'C', '#10b981', '% Eficiencia: Conversión de C ➔ V')
+                        ratioSeries('E', 'P', '#06b6d4', 'Eficiencia P → E', true),
+                        ratioSeries('C', 'E', '#a855f7', 'Eficiencia E → C', true),
+                        ratioSeries('V', 'C', '#10b981', 'Eficiencia C → V', true)
                     ]
                 },
-                options: chartOpts('Unidades')
+                options: chartOptsPct()
             });
 
-            // Efectividad: P/V, P/S
+            // Efectividad: P→V, P→S (porcentajes)
             destroyChart('efectividad');
             const ctxEf = document.getElementById('chartEfectividad').getContext('2d');
             charts['efectividad'] = new Chart(ctxEf, {
                 type: 'line',
                 data: {
                     labels, datasets: [
-                        ratioSeries('V', 'P', '#f59e0b', '% Eficiencia: Conversión P ➔ V (Cierre)'),
-                        ratioSeries('S', 'P', '#ef4444', '% Eficiencia: Conversión P ➔ S (Solicitud)')
+                        ratioSeries('V', 'P', '#3b82f6', 'Eficiencia P → V (Cierre)', true),
+                        ratioSeries('S', 'P', '#ef4444', 'Eficiencia P → S (Solicitud)', true)
                     ]
                 },
-                options: chartOpts('Tasa (0\u20131)')
+                options: chartOptsPct()
             });
 
             // Prima promedio: $/V, $/S
@@ -2457,7 +2678,7 @@
                         ratioSeries('prima', 'S', '#10b981', '$/S — Prima por solicitud')
                     ]
                 },
-                options: chartOpts('$ MXN')
+                options: chartOptsDollar()
             });
         }
 
@@ -2537,14 +2758,8 @@
             const primas = agents.map(a => agMap[a].prima);
             const Vs = agents.map(a => agMap[a].V);
             const Ps = agents.map(a => agMap[a].P);
-            const pvs = agents.map(a => agMap[a].P > 0 ? parseFloat((agMap[a].V / agMap[a].P).toFixed(2)) : 0);
-
-            destroyChart('kpiPrima');
-            charts['kpiPrima'] = new Chart(document.getElementById('kpiPrima').getContext('2d'), {
-                type: 'bar',
-                data: { labels, datasets: [{ label: 'Prima Neta ($)', data: primas, backgroundColor: CHART_COLORS.S }] },
-                options: chartOpts('Monto $')
-            });
+            // Eficiencia P → V en porcentaje (0-100)
+            const pvs = agents.map(a => agMap[a].P > 0 ? parseFloat(((agMap[a].V / agMap[a].P) * 100).toFixed(1)) : 0);
 
             destroyChart('kpiVolumen');
             charts['kpiVolumen'] = new Chart(document.getElementById('kpiVolumen').getContext('2d'), {
@@ -2561,26 +2776,8 @@
             destroyChart('kpiEfectividad');
             charts['kpiEfectividad'] = new Chart(document.getElementById('kpiEfectividad').getContext('2d'), {
                 type: 'bar',
-                data: { labels, datasets: [{ label: '% Eficiencia: Conversión de P ➔ V (Cierre)', data: pvs, backgroundColor: CHART_COLORS.C }] },
-                options: chartOpts('Porcentaje (0.2 = 20%)')
-            });
-
-            // Prima Promedio / V
-            const pV = agents.map(a => agMap[a].V > 0 ? (agMap[a].prima / agMap[a].V).toFixed(2) : 0);
-            destroyChart('kpiPrimaV');
-            charts['kpiPrimaV'] = new Chart(document.getElementById('kpiPrimaV').getContext('2d'), {
-                type: 'bar',
-                data: { labels, datasets: [{ label: 'Prima Promedio por Cierre ($/V)', data: pV, backgroundColor: '#d4af37' }] },
-                options: chartOpts('$ USD/MXN')
-            });
-
-            // Prima Promedio / S
-            const pS = agents.map(a => agMap[a].S > 0 ? (agMap[a].prima / agMap[a].S).toFixed(2) : 0);
-            destroyChart('kpiPrimaS');
-            charts['kpiPrimaS'] = new Chart(document.getElementById('kpiPrimaS').getContext('2d'), {
-                type: 'bar',
-                data: { labels, datasets: [{ label: 'Prima Promedio por Solicitud ($/S)', data: pS, backgroundColor: CHART_COLORS.S }] },
-                options: chartOpts('$ USD/MXN')
+                data: { labels, datasets: [{ label: 'Eficiencia P → V', data: pvs, backgroundColor: CHART_COLORS.P }] },
+                options: chartOptsPct()
             });
 
             // Volumen Full PECVS
@@ -2605,23 +2802,62 @@
                 options: chartOpts('Cantidad Unidades')
             });
 
-            // Ratios de Embudo
+            // Ratios de Embudo (en porcentaje 0-100)
             const ratios = [
-                { id: 'kpiRatioEP', label: '% Eficiencia: Conversión de P ➔ E', top: 'E', bot: 'P', color: CHART_COLORS.E },
-                { id: 'kpiRatioCE', label: '% Eficiencia: Conversión de E ➔ C', top: 'C', bot: 'E', color: CHART_COLORS.C },
-                { id: 'kpiRatioVC', label: '% Eficiencia: Conversión de C ➔ V', top: 'V', bot: 'C', color: CHART_COLORS.V },
-                { id: 'kpiRatioSV', label: '% Eficiencia: Conversión de V ➔ S', top: 'S', bot: 'V', color: CHART_COLORS.S }
+                { id: 'kpiRatioEP', label: 'Eficiencia P → E', top: 'E', bot: 'P', color: CHART_COLORS.E },
+                { id: 'kpiRatioCE', label: 'Eficiencia E → C', top: 'C', bot: 'E', color: CHART_COLORS.C },
+                { id: 'kpiRatioVC', label: 'Eficiencia C → V', top: 'V', bot: 'C', color: CHART_COLORS.V }
             ];
 
             ratios.forEach(r => {
-                const data = agents.map(a => agMap[a][r.bot] > 0 ? parseFloat((agMap[a][r.top] / agMap[a][r.bot]).toFixed(2)) : 0);
+                const data = agents.map(a => agMap[a][r.bot] > 0 ? parseFloat(((agMap[a][r.top] / agMap[a][r.bot]) * 100).toFixed(1)) : 0);
                 destroyChart(r.id);
                 charts[r.id] = new Chart(document.getElementById(r.id).getContext('2d'), {
                     type: 'bar',
                     data: { labels, datasets: [{ label: r.label, data: data, backgroundColor: r.color }] },
-                    options: chartOpts('Ratio (Tasa 0-1)')
+                    options: chartOptsPct()
                 });
             });
+        }
+
+        // chartOpts especial para gráficas con montos en pesos $
+        function chartOptsDollar() {
+            return {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } },
+                    tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` } }
+                },
+                scales: {
+                    x: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+                    y: {
+                        grid: { color: 'rgba(255,255,255,.05)' },
+                        ticks: { color: '#94a3b8', font: { size: 10 }, callback: (v) => '$' + v.toLocaleString('es-MX') },
+                        title: { display: true, text: 'Prima ($)', color: '#94a3b8', font: { size: 10 } },
+                        beginAtZero: true
+                    }
+                }
+            };
+        }
+
+        // chartOpts especial para gráficas de % (formatea ticks y tooltip con sufijo %)
+        function chartOptsPct() {
+            return {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } },
+                    tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y}%` } }
+                },
+                scales: {
+                    x: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+                    y: {
+                        grid: { color: 'rgba(255,255,255,.05)' },
+                        ticks: { color: '#94a3b8', font: { size: 10 }, callback: (v) => v + '%' },
+                        title: { display: true, text: '% Eficiencia', color: '#94a3b8', font: { size: 10 } },
+                        beginAtZero: true
+                    }
+                }
+            };
         }
 
         function chartOpts(yLabel) {
@@ -3053,19 +3289,32 @@
             const container = document.getElementById('tienda-items');
             if (!container) return;
             try {
-                const snap = await getDoc(doc(db, 'store', 'promotorCatalog'));
+                // Multi-tenant: tienda específica del director
+                // Sin directorCode, NO hacer fallback a tienda global (evita data leak)
+                const dc = state.directorCode || '';
+                if (!dc) { container.innerHTML = '<div class="empty-state"><i class="fa fa-circle-info"></i> Tu director aún no configura la tienda.</div>'; return; }
+                const catalogId = `${dc}_promotorCatalog`;
+                const snap = await getDoc(doc(db, 'store', catalogId));
                 const items = snap.exists() ? (snap.data().items || []).filter(i => i.activo) : [];
                 if (!items.length) { container.innerHTML = '<div class="empty-state"><i class="fa fa-box-open"></i> Sin items disponibles por ahora.</div>'; return; }
                 container.innerHTML = items.map(item => {
                     const puedo = (state.karma || 0) >= item.costo;
                     const sinStock = item.stock === 0;
+                    // Escapar todos los strings de Firestore (catalogo controlado por director)
+                    // antes de inyectar en innerHTML / atributos onclick
+                    const eEmoji = escapeHtml(item.emoji || '🎁');
+                    const eNombre = escapeHtml(item.nombre || '');
+                    const eDesc = escapeHtml(item.descripcion || '');
+                    const eId = escapeHtml(item.id || '');
+                    const eCatalog = escapeHtml(catalogId);
+                    const costoNum = Number(item.costo) || 0;
                     return `<div style="background:var(--panel2);border-radius:12px;padding:16px;border:1px solid rgba(212,175,55,0.15);display:flex;flex-direction:column;gap:8px;">
-                        <div style="font-size:36px;text-align:center;">${item.emoji||'🎁'}</div>
-                        <div style="font-weight:700;font-size:14px;text-align:center;">${item.nombre}</div>
-                        <div style="font-size:12px;color:var(--slate);text-align:center;">${item.descripcion||''}</div>
-                        <div style="text-align:center;font-weight:800;color:var(--gold);">🌮 ${item.costo} tacos</div>
-                        ${item.stock >= 0 ? `<div style="text-align:center;font-size:11px;color:var(--slate);">Stock: ${item.stock}</div>` : ''}
-                        <button class="btn btn-sm ${puedo&&!sinStock?'btn-green':''}" ${(!puedo||sinStock)?'disabled':''} onclick="promotorSolicitarCanje('${item.id}','${item.nombre}',${item.costo},'${item.emoji||'🎁'}','promotorCatalog')">
+                        <div style="font-size:36px;text-align:center;">${eEmoji}</div>
+                        <div style="font-weight:700;font-size:14px;text-align:center;">${eNombre}</div>
+                        <div style="font-size:12px;color:var(--slate);text-align:center;">${eDesc}</div>
+                        <div style="text-align:center;font-weight:800;color:var(--gold);">🌮 ${costoNum} tacos</div>
+                        ${item.stock >= 0 ? `<div style="text-align:center;font-size:11px;color:var(--slate);">Stock: ${Number(item.stock)||0}</div>` : ''}
+                        <button class="btn btn-sm ${puedo&&!sinStock?'btn-green':''}" ${(!puedo||sinStock)?'disabled':''} onclick="promotorSolicitarCanje('${eId}','${eNombre}',${costoNum},'${eEmoji}','${eCatalog}')">
                             ${sinStock ? 'Sin stock' : !puedo ? 'Tacos insuficientes' : '🛒 Solicitar canje'}
                         </button>
                     </div>`;
@@ -3083,10 +3332,13 @@
                 container.innerHTML = reqs.length ? reqs.map(r => {
                     const color = r.status==='approved'?'var(--green)':r.status==='rejected'?'var(--red)':'var(--orange)';
                     const label = r.status==='approved'?'✓ Aprobado':r.status==='rejected'?'✗ Rechazado':'⏳ Pendiente';
+                    const eEmoji = escapeHtml(r.emoji || '🎁');
+                    const eName = escapeHtml(r.itemNombre || '');
+                    const costoNum = Number(r.costo) || 0;
                     return `<div style="padding:10px 14px;background:var(--panel);border-radius:8px;border-left:3px solid ${color};display:flex;justify-content:space-between;align-items:center;gap:8px;">
                         <div>
-                            <div style="font-weight:600;font-size:13px;">${r.emoji||'🎁'} ${r.itemNombre}</div>
-                            <div style="font-size:11px;color:var(--slate);">🌮 ${r.costo} tacos &nbsp;·&nbsp; ${new Date(r.fechaSolicitud).toLocaleDateString('es-MX')}</div>
+                            <div style="font-weight:600;font-size:13px;">${eEmoji} ${eName}</div>
+                            <div style="font-size:11px;color:var(--slate);">🌮 ${costoNum} tacos &nbsp;·&nbsp; ${new Date(r.fechaSolicitud).toLocaleDateString('es-MX')}</div>
                         </div>
                         <span style="color:${color};font-size:11px;font-weight:700;white-space:nowrap;">${label}</span>
                     </div>`;
@@ -3106,11 +3358,15 @@
                 container.innerHTML = reqs.length ? reqs.map(r => {
                     const color = r.status==='approved'?'var(--green)':r.status==='rejected'?'var(--red)':'var(--orange)';
                     const label = r.status==='approved'?'✓ Aprobado':r.status==='rejected'?'✗ Rechazado':'⏳ Pendiente';
+                    const eEmoji = escapeHtml(r.emoji || '🎁');
+                    const eName = escapeHtml(r.itemNombre || '');
+                    const eSol = escapeHtml(r.nombreSolicitante || r.emailSolicitante || '');
+                    const costoNum = Number(r.costo) || 0;
                     return `<div style="padding:10px 14px;background:var(--panel);border-radius:8px;border-left:3px solid ${color};display:flex;justify-content:space-between;align-items:center;gap:8px;">
                         <div>
-                            <div style="font-weight:600;font-size:13px;">${r.emoji||'🎁'} ${r.itemNombre}</div>
-                            <div style="font-size:12px;color:var(--white);margin-top:1px;">${r.nombreSolicitante||r.emailSolicitante}</div>
-                            <div style="font-size:11px;color:var(--slate);">🌮 ${r.costo} tacos &nbsp;·&nbsp; ${new Date(r.fechaSolicitud).toLocaleDateString('es-MX')}</div>
+                            <div style="font-weight:600;font-size:13px;">${eEmoji} ${eName}</div>
+                            <div style="font-size:12px;color:var(--white);margin-top:1px;">${eSol}</div>
+                            <div style="font-size:11px;color:var(--slate);">🌮 ${costoNum} tacos &nbsp;·&nbsp; ${new Date(r.fechaSolicitud).toLocaleDateString('es-MX')}</div>
                         </div>
                         <span style="color:${color};font-size:11px;font-weight:700;white-space:nowrap;">${label}</span>
                     </div>`;
@@ -3118,23 +3374,55 @@
             } catch(e) { container.innerHTML = '<div class="empty-state">Error cargando compras del equipo.</div>'; }
         }
 
-        window.promotorSolicitarCanje = async function(itemId, itemNombre, costo, emoji, catalogDoc) {
+        // Entry point del botón de canje (abre modal custom; el confirm real se hace
+        // desde confirmCanje cuando el usuario aprueba el modal)
+        window.promotorSolicitarCanje = function(itemId, itemNombre, costo, emoji, catalogDoc) {
             if ((state.karma || 0) < costo) { alert('Tacos insuficientes.'); return; }
-            if (!confirm(`¿Solicitar canje de "${itemNombre}" por 🌮 ${costo} tacos? Los tacos se descontarán si el director aprueba.`)) return;
+            openCanjeConfirm(itemId, itemNombre, costo, emoji, catalogDoc);
+        };
+
+        // Lógica real de solicitar canje. Llamada desde confirmCanje (modal).
+        window._doSolicitarCanje = async function(itemId, itemNombre, costo, emoji, catalogDoc) {
             try {
-                await addDoc(collection(db, 'redemptionRequests'), {
-                    emailSolicitante: user.email,
-                    nombreSolicitante: state.promoterName || user.displayName || user.email,
-                    rol: 'promotor',
-                    promotorCode: state.promotorCode || '',
-                    itemId, itemNombre, costo, emoji, catalogDoc,
-                    status: 'pending',
-                    fechaSolicitud: new Date().toISOString()
+                // Transacción atómica: validar stock + decrementar + crear solicitud.
+                const catRef = doc(db, 'store', catalogDoc);
+                const newReqRef = doc(collection(db, 'redemptionRequests'));
+
+                await runTransaction(db, async (tx) => {
+                    const catSnap = await tx.get(catRef);
+                    if (!catSnap.exists()) throw new Error('El catálogo de la tienda no existe.');
+                    const items = (catSnap.data().items || []).slice();
+                    const idx = items.findIndex(i => i.id === itemId);
+                    if (idx < 0) throw new Error(`El item "${itemNombre}" ya no está en el catálogo.`);
+                    const item = items[idx];
+                    if (item.activo === false) throw new Error(`El item "${itemNombre}" fue desactivado.`);
+                    const stock = Number(item.stock);
+                    if (stock === 0) throw new Error(`Ya alguien compró el último "${itemNombre}". Sin stock disponible.`);
+
+                    if (stock > 0) {
+                        items[idx] = { ...item, stock: stock - 1 };
+                        tx.update(catRef, { items });
+                    }
+                    tx.set(newReqRef, {
+                        emailSolicitante: user.email,
+                        nombreSolicitante: state.promoterName || user.displayName || user.email,
+                        rol: 'promotor',
+                        promotorCode: state.promotorCode || '',
+                        directorCode: state.directorCode || '',
+                        regionName: state.regionName || '',
+                        itemId, itemNombre, costo, emoji, catalogDoc,
+                        status: 'pending',
+                        stockReservado: stock > 0,
+                        fechaSolicitud: new Date().toISOString()
+                    });
                 });
-                alert(`✅ Solicitud enviada. El director la revisará pronto.`);
+                alert(`✅ Solicitud enviada. El item te queda reservado hasta que el director apruebe o rechace.`);
                 await renderPromotorMisSolicitudes();
                 await renderPromotorTiendaItems();
-            } catch(e) { alert('Error: ' + e.message); }
+            } catch(e) {
+                alert('No se pudo solicitar el canje:\n' + e.message);
+                try { await renderPromotorTiendaItems(); } catch {}
+            }
         };
 
         // ─── KARMA ────────────────────────────────────────────────────────────────────

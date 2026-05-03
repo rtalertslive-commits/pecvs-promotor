@@ -1,7 +1,7 @@
 {
-    "name": "PECVS$ Analytics Hub",
-    "short_name": "Analytics Hub",
-    "description": "Panel de Control para Coaches PECVS$",
+    "name": "PECVS$ Promotor",
+    "short_name": "Promotor",
+    "description": "Panel de Control para Promotores PECVS$",
     "start_url": "./index.html",
     "display": "standalone",
     "background_color": "#0f172a",
