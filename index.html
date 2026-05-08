@@ -1039,7 +1039,7 @@
                         <div class="chart-wrap"><canvas id="chartRatios"></canvas></div>
                     </div>
                     <div class="chart-card">
-                        <h3><i class="fa fa-bullseye"></i> Ratios de efectividad (P/V · P/S)</h3>
+                        <h3><i class="fa fa-bullseye"></i> Ratios de efectividad (P/V)</h3>
                         <div class="chart-wrap"><canvas id="chartEfectividad"></canvas></div>
                     </div>
                     <div class="chart-card">
@@ -2716,8 +2716,7 @@
                 type: 'line',
                 data: {
                     labels, datasets: [
-                        ratioSeries('V', 'P', '#3b82f6', 'Eficiencia P → V (Cierre)', true),
-                        ratioSeries('S', 'P', '#ef4444', 'Eficiencia P → S (Solicitud)', true)
+                        ratioSeries('V', 'P', '#3b82f6', 'Eficiencia P → V (Cierre)', true)
                     ]
                 },
                 options: chartOptsPct()
