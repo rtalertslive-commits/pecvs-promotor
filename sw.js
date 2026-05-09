@@ -1,8 +1,9 @@
-const CACHE_NAME = 'pecvs-promotor-mainnet-v1.7.2';
+const CACHE_NAME = 'pecvs-promotor-mainnet-v1.8.0';
 const assets = [
     './',
     './index.html',
-    './manifest.json'
+    './manifest.json',
+    './icon.svg'
 ];
 
 self.addEventListener('install', e => {
