@@ -514,6 +514,10 @@
             #tab-bitacora .card,
             #tab-reporte .card,
             #tab-mi-reporte .card { display: none; }
+            /* Conciliación toggle no aplica en mobile (las cards mobile ya muestran
+               total real con válido+rojo mezclado). El feature es solo para la
+               tabla desktop, esconder el botón evita confusión. */
+            #btn-tog-red { display: none !important; }
         }
 
         /* CARDS */
