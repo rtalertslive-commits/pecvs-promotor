@@ -1209,6 +1209,59 @@
             transform: translateX(-50%) rotate(45deg);
         }
 
+        /* ═══ SUB-TABS dentro de pestaña Tienda (Para mí / Coaches / Agentes) ═══ */
+        .tienda-subtabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 14px;
+            background: rgba(255,255,255,0.03);
+            padding: 4px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.06);
+            flex-wrap: wrap;
+        }
+        .tienda-subtab-btn {
+            flex: 1 1 auto;
+            min-width: 0;
+            background: transparent;
+            border: none;
+            color: var(--slate);
+            font-size: 12px;
+            font-weight: 700;
+            padding: 10px 6px;
+            border-radius: 7px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: background .15s, color .15s;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+        @media (min-width: 768px) {
+            .tienda-subtab-btn { font-size: 13px; padding: 10px 8px; }
+        }
+        .tienda-subtab-btn:hover:not(.active) {
+            background: rgba(255,255,255,0.04);
+            color: var(--white);
+        }
+        .tienda-subtab-btn.active {
+            background: rgba(212,175,55,0.15);
+            color: var(--gold);
+        }
+        .tienda-readonly-badge {
+            display: block;
+            text-align: center;
+            font-size: 10px;
+            color: var(--slate);
+            padding: 6px 0 2px;
+            border-top: 1px dashed rgba(255,255,255,0.08);
+            margin-top: 4px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
         /* ═══ SUB-TABS Equipo/Pendientes — MOBILE ONLY ═══ */
         .lb-subtabs { display: none; }
         @media (max-width: 767px) {
@@ -1841,24 +1894,62 @@
 
         <!-- ═══════════════════ TAB: TIENDA ═══════════════════ -->
         <div id="tab-tienda" class="tab-panel">
-            <div class="card" style="margin-bottom:16px;">
-                <p class="card-title"><i class="fa fa-store"></i> Tienda — Canjea tus Totopos</p>
-                <p style="font-size:12px;color:var(--slate);margin-bottom:12px;">Selecciona un item y solicita el canje. El director lo aprobará.</p>
-                <div id="tienda-items" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;">
-                    <div class="empty-state"><i class="fa fa-spinner fa-spin"></i> Cargando...</div>
+            <!-- Sub-tabs: Para mí / Para mis Coaches / Para mis Agentes -->
+            <div class="tienda-subtabs" role="tablist">
+                <button class="tienda-subtab-btn active" data-subview="mia" onclick="switchTiendaSubview('mia')" role="tab">
+                    🛒 Para mí
+                </button>
+                <button class="tienda-subtab-btn" data-subview="coaches" onclick="switchTiendaSubview('coaches')" role="tab">
+                    🧑‍🏫 Mis Coaches
+                </button>
+                <button class="tienda-subtab-btn" data-subview="agentes" onclick="switchTiendaSubview('agentes')" role="tab">
+                    👤 Mis Agentes
+                </button>
+            </div>
+
+            <!-- Subview MIA (default): catálogo del promotor + sus solicitudes + compras coaches -->
+            <div id="tienda-subview-mia">
+                <div class="card" style="margin-bottom:16px;">
+                    <p class="card-title"><i class="fa fa-store"></i> Tienda — Canjea tus Totopos</p>
+                    <p style="font-size:12px;color:var(--slate);margin-bottom:12px;">Selecciona un item y solicita el canje. El director lo aprobará.</p>
+                    <div id="tienda-items" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;">
+                        <div class="empty-state"><i class="fa fa-spinner fa-spin"></i> Cargando...</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <p class="card-title"><i class="fa fa-clock-rotate-left"></i> Mis Solicitudes</p>
+                    <div id="tienda-mis-solicitudes" style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;">
+                        <div class="empty-state"><i class="fa fa-inbox"></i> Sin solicitudes aún.</div>
+                    </div>
+                </div>
+                <div class="card" style="margin-top:16px;">
+                    <p class="card-title"><i class="fa fa-users"></i> Compras de mis Coaches</p>
+                    <p style="font-size:12px;color:var(--slate);margin-bottom:12px;">Historial de canjes solicitados por los coaches de tu equipo.</p>
+                    <div id="tienda-equipo-solicitudes" style="display:flex;flex-direction:column;gap:8px;max-height:350px;overflow-y:auto;">
+                        <div class="empty-state"><i class="fa fa-spinner fa-spin"></i> Cargando...</div>
+                    </div>
                 </div>
             </div>
-            <div class="card">
-                <p class="card-title"><i class="fa fa-clock-rotate-left"></i> Mis Solicitudes</p>
-                <div id="tienda-mis-solicitudes" style="display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;">
-                    <div class="empty-state"><i class="fa fa-inbox"></i> Sin solicitudes aún.</div>
+
+            <!-- Subview COACHES: catálogo de coaches (read-only) -->
+            <div id="tienda-subview-coaches" style="display:none;">
+                <div class="card">
+                    <p class="card-title"><i class="fa fa-eye"></i> Catálogo de mis Coaches</p>
+                    <p style="font-size:12px;color:var(--slate);margin-bottom:12px;">👀 Solo visualización — estos son los items que tus coaches pueden canjear con sus totopos.</p>
+                    <div id="tienda-items-coaches" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;">
+                        <div class="empty-state"><i class="fa fa-spinner fa-spin"></i> Cargando...</div>
+                    </div>
                 </div>
             </div>
-            <div class="card" style="margin-top:16px;">
-                <p class="card-title"><i class="fa fa-users"></i> Compras de mis Coaches</p>
-                <p style="font-size:12px;color:var(--slate);margin-bottom:12px;">Historial de canjes solicitados por los coaches de tu equipo.</p>
-                <div id="tienda-equipo-solicitudes" style="display:flex;flex-direction:column;gap:8px;max-height:350px;overflow-y:auto;">
-                    <div class="empty-state"><i class="fa fa-spinner fa-spin"></i> Cargando...</div>
+
+            <!-- Subview AGENTES: catálogo de agentes (read-only) -->
+            <div id="tienda-subview-agentes" style="display:none;">
+                <div class="card">
+                    <p class="card-title"><i class="fa fa-eye"></i> Catálogo de mis Agentes</p>
+                    <p style="font-size:12px;color:var(--slate);margin-bottom:12px;">👀 Solo visualización — estos son los items que tus agentes pueden canjear con sus totopos.</p>
+                    <div id="tienda-items-agentes" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;">
+                        <div class="empty-state"><i class="fa fa-spinner fa-spin"></i> Cargando...</div>
+                    </div>
                 </div>
             </div>
         </div><!-- /tab-tienda -->
@@ -4410,6 +4501,65 @@
             await renderPromotorMisSolicitudes();
             await renderPromotorEquipoSolicitudes();
         };
+
+        // ─── Sub-tabs de Tienda: switch entre "Para mí" / "Coaches" / "Agentes" ─────
+        window.switchTiendaSubview = function (name) {
+            const target = (name === 'coaches' || name === 'agentes') ? name : 'mia';
+            document.querySelectorAll('.tienda-subtab-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.subview === target);
+            });
+            const ids = { mia: 'tienda-subview-mia', coaches: 'tienda-subview-coaches', agentes: 'tienda-subview-agentes' };
+            Object.entries(ids).forEach(([key, id]) => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = (key === target) ? '' : 'none';
+            });
+            if (target === 'coaches') renderRoleCatalogReadonly('coach');
+            else if (target === 'agentes') renderRoleCatalogReadonly('agent');
+        };
+
+        // Lee {dc}_{role}Catalog y lo rendera en read-only (sin canje).
+        // Promotor lo usa para ver qué items tienen disponibles sus coaches y agentes.
+        async function renderRoleCatalogReadonly(role) {
+            const catalogSuffix = role === 'coach' ? 'coachCatalog' : 'agentCatalog';
+            const containerId = role === 'coach' ? 'tienda-items-coaches' : 'tienda-items-agentes';
+            const labelRol = role === 'coach' ? 'coaches' : 'agentes';
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            try {
+                const dc = state.directorCode || '';
+                if (!dc) {
+                    container.innerHTML = '<div class="empty-state"><i class="fa fa-circle-info"></i> Tu director aún no configura la tienda.</div>';
+                    return;
+                }
+                const catalogId = `${dc}_${catalogSuffix}`;
+                const snap = await getDoc(doc(db, 'store', catalogId));
+                const items = snap.exists() ? (snap.data().items || []).filter(i => i.activo) : [];
+                if (!items.length) {
+                    container.innerHTML = `<div class="empty-state"><i class="fa fa-box-open"></i> Tu director aún no tiene items para ${labelRol}.</div>`;
+                    return;
+                }
+                container.innerHTML = items.map(item => {
+                    const eEmoji = escapeHtml(item.emoji || '🎁');
+                    const eNombre = escapeHtml(item.nombre || '');
+                    const eDesc = escapeHtml(item.descripcion || '');
+                    const costoNum = Number(item.costo) || 0;
+                    const eImgUrl = item.imageUrl ? escapeHtml(item.imageUrl) : '';
+                    const visualHtml = eImgUrl
+                        ? `<img src="${eImgUrl}" alt="${eNombre}" loading="lazy" onclick="openImagePreview('${eImgUrl}')" style="width:100px;height:100px;object-fit:cover;border-radius:10px;cursor:zoom-in;margin:0 auto;display:block;border:1px solid rgba(212,175,55,0.2);">`
+                        : `<div style="font-size:36px;text-align:center;">${eEmoji}</div>`;
+                    return `<div style="background:var(--panel2);border-radius:12px;padding:16px;border:1px solid rgba(212,175,55,0.15);display:flex;flex-direction:column;gap:8px;opacity:0.95;">
+                        ${visualHtml}
+                        <div style="font-weight:700;font-size:14px;text-align:center;">${eNombre}</div>
+                        <div style="font-size:12px;color:var(--slate);text-align:center;">${eDesc}</div>
+                        <div style="text-align:center;font-weight:800;color:var(--gold);"><svg class="totopo-icon"><use href="#totopo"/></svg> ${costoNum} totopos</div>
+                        ${item.stock >= 0 ? `<div style="text-align:center;font-size:11px;color:var(--slate);">Stock: ${Number(item.stock)||0}</div>` : ''}
+                        <div class="tienda-readonly-badge">👀 Solo visualización</div>
+                    </div>`;
+                }).join('');
+            } catch(e) {
+                container.innerHTML = `<div class="empty-state">Error cargando catálogo de ${labelRol}.</div>`;
+            }
+        }
 
         async function renderPromotorTiendaItems() {
             const container = document.getElementById('tienda-items');
