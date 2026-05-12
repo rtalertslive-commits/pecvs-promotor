@@ -1208,6 +1208,84 @@
             border-left: 2px solid var(--gold);
             transform: translateX(-50%) rotate(45deg);
         }
+
+        /* ═══ SUB-TABS Equipo/Pendientes — MOBILE ONLY ═══ */
+        .lb-subtabs { display: none; }
+        @media (max-width: 767px) {
+            .lb-subtabs {
+                display: flex; gap: 4px; margin-bottom: 14px;
+                background: rgba(255,255,255,0.03); padding: 4px;
+                border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);
+            }
+            body.lb-subview-pendientes #tab-leaderboard .lb-filters,
+            body.lb-subview-pendientes #tab-leaderboard .lb-mobile,
+            body.lb-subview-pendientes #tab-leaderboard .lb-desktop { display: none !important; }
+            body.lb-subview-pendientes #lb-mobile-pendientes-subview { display: block !important; }
+        }
+        .lb-subtab-btn {
+            flex: 1; background: transparent; border: none; color: var(--slate);
+            font-size: 12px; font-weight: 700; padding: 9px 8px; border-radius: 7px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            gap: 6px; position: relative; transition: background .15s, color .15s; font-family: inherit;
+        }
+        .lb-subtab-btn:hover:not(.active) { background: rgba(255,255,255,0.04); color: var(--white); }
+        .lb-subtab-btn.active { background: rgba(212,175,55,0.15); color: var(--gold); }
+        .lb-subtab-badge {
+            background: #f59e0b; color: #0f172a; font-size: 10px; font-weight: 800;
+            min-width: 18px; height: 18px; border-radius: 999px; padding: 0 6px;
+            display: inline-flex; align-items: center; justify-content: center; line-height: 1;
+        }
+        /* Badge contador en bottom nav Equipo */
+        .bottom-nav .bn-btn { position: relative; }
+        .bn-badge {
+            position: absolute; top: 4px; right: 18%;
+            background: #f59e0b; color: #0f172a; font-size: 10px; font-weight: 800;
+            min-width: 16px; height: 16px; border-radius: 999px; padding: 0 5px;
+            display: inline-flex; align-items: center; justify-content: center; line-height: 1;
+        }
+        /* ═══ PENDIENTES cards fantasma ═══ */
+        .lb-pendientes-section { margin-top: 0; }
+        .lb-pendientes-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; gap: 10px; flex-wrap: wrap;
+        }
+        .lb-pendientes-title {
+            font-size: 12px; font-weight: 700; color: var(--slate);
+            text-transform: uppercase; letter-spacing: 1px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        .lb-pendientes-title .count {
+            background: rgba(245,158,11,0.15); color: #f59e0b;
+            padding: 2px 8px; border-radius: 999px; font-weight: 800; font-size: 11px;
+        }
+        .lb-pendientes-filters {
+            display: flex; gap: 6px; flex-wrap: wrap;
+            flex: 1; min-width: 0; justify-content: flex-end;
+        }
+        .lb-pendientes-filter {
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+            color: var(--white); font-size: 11px; padding: 4px 8px; border-radius: 6px; cursor: pointer;
+            max-width: 180px;
+        }
+        .lb-ghost-card {
+            background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.15);
+            border-radius: 10px; padding: 11px 14px; margin-bottom: 8px;
+            display: flex; align-items: center; gap: 12px; opacity: 0.85;
+        }
+        .lb-ghost-card.tier-5 { border-color: rgba(239,68,68,0.4);  background: rgba(239,68,68,0.04); }
+        .lb-ghost-card.tier-4 { border-color: rgba(248,113,113,0.35); background: rgba(248,113,113,0.04); }
+        .lb-ghost-card.tier-3 { border-color: rgba(251,146,60,0.3);  background: rgba(251,146,60,0.04); }
+        .lb-ghost-card.tier-2 { border-color: rgba(251,191,36,0.25); background: rgba(251,191,36,0.04); }
+        .lb-ghost-card.tier-0 { border-color: rgba(245,158,11,0.3);  background: rgba(245,158,11,0.04); }
+        .lb-ghost-icon { font-size: 22px; flex-shrink: 0; width: 32px; text-align: center; }
+        .lb-ghost-body { flex: 1; min-width: 0; }
+        .lb-ghost-name {
+            font-size: 13px; font-weight: 700; color: var(--white);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .lb-ghost-tier-label { font-size: 11px; margin-top: 2px; font-weight: 600; }
+        .lb-ghost-second-line { font-size: 10px; color: var(--slate); margin-top: 2px; }
+        .lb-ghost-coach { font-size: 10px; color: var(--slate); margin-top: 2px; opacity: 0.75; }
     </style>
 </head>
 
@@ -1316,6 +1394,17 @@
         <!-- ═══════════════════════════════ TAB: LEADERBOARD ═══════════════════════════════ -->
         <div id="tab-leaderboard" class="tab-panel active">
             <div class="card">
+                <!-- Sub-tabs (mobile only): Equipo / Pendientes con badge -->
+                <div class="lb-subtabs" role="tablist">
+                    <button class="lb-subtab-btn active" data-subview="equipo" onclick="switchLbSubview('equipo')" role="tab">
+                        <i class="fa fa-table"></i> Equipo
+                    </button>
+                    <button class="lb-subtab-btn" data-subview="pendientes" onclick="switchLbSubview('pendientes')" role="tab">
+                        <i class="fa fa-ghost"></i> Pendientes
+                        <span id="lb-subtab-pendientes-badge" class="lb-subtab-badge" style="display:none;">0</span>
+                    </button>
+                </div>
+
                 <div class="lb-filters">
                     <div>
                         <label class="field-label">Equipo Coach</label>
@@ -1359,6 +1448,11 @@
                     </div>
                     <div id="lb-mobile-team-total"></div>
                     <div id="lb-mobile-rows"></div>
+                </div>
+
+                <!-- Subview PENDIENTES (mobile only) -->
+                <div id="lb-mobile-pendientes-subview" style="display:none;">
+                    <div id="lb-mobile-pendientes"></div>
                 </div>
 
                 <div class="table-scroll lb-desktop">
@@ -1890,6 +1984,7 @@
         <button class="bn-btn active" data-tab="leaderboard" onclick="switchTab('leaderboard',this)">
             <i class="fa fa-table"></i>
             <span>Equipo</span>
+            <span id="equipo-pendientes-badge" class="bn-badge" style="display:none;">0</span>
         </button>
         <button class="bn-btn" data-tab="kpis" onclick="switchTab('kpis',this)">
             <i class="fa fa-chart-column"></i>
@@ -2550,54 +2645,276 @@
         function startListeningAgentsForCoaches() {
             clearAgentUnsubs();
 
-            // Aggregate state
+            // ─── REFACTOR: agentId (doc.id) como clave única ──────────────────────────
+            // Fixea bug de homónimos: dos agentes con mismo nombre bajo coaches distintos
+            // ahora se tratan como agentes separados (antes se mergeaban).
+            //   - aggregated.agents:        array de IDs (doc.id)
+            //   - aggregated.agentCoachMap: { [agentId]: coachEmail }
+            //   - aggregated.agentDetails:  { [agentId]: { agentName, email, approvedAt, coachEmail } }
+            //   - entries.agentId:          campo nuevo (clave única); entries.agent (display) mantenido
             const aggregated = {
                 entries: [],
                 agents: [],
-                agentCoachMap: {}
+                agentCoachMap: {},
+                agentDetails: {}
             };
 
             state.coaches.forEach(coach => {
                 if (!coach.agentTeamCode) return;
                 const agentQ = query(collection(db, "users"), where("teamCode", "==", coach.agentTeamCode));
                 const unsub = onSnapshot(agentQ, (snapshot) => {
-                    // Rebuild state per coach teamCode whenever there's a change
-                    // Remove previous entries/agents from this coach
-                    aggregated.entries = aggregated.entries.filter(e => aggregated.agentCoachMap[e.agent] !== coach.email);
-                    aggregated.agents = aggregated.agents.filter(a => aggregated.agentCoachMap[a] !== coach.email);
-
-                    // Remove mappings for this coach
-                    Object.keys(aggregated.agentCoachMap).forEach(ag => {
-                        if (aggregated.agentCoachMap[ag] === coach.email) {
-                            delete aggregated.agentCoachMap[ag];
+                    // Cleanup: remover data previa de ESTE coach por agentId
+                    aggregated.entries = aggregated.entries.filter(e => aggregated.agentCoachMap[e.agentId] !== coach.email);
+                    aggregated.agents = aggregated.agents.filter(id => aggregated.agentCoachMap[id] !== coach.email);
+                    Object.keys(aggregated.agentCoachMap).forEach(id => {
+                        if (aggregated.agentCoachMap[id] === coach.email) {
+                            delete aggregated.agentCoachMap[id];
+                            delete aggregated.agentDetails[id];
                         }
                     });
 
                     snapshot.forEach((docSnap) => {
                         const agentData = docSnap.data();
-                        if (agentData.agentName) {
-                            if (!aggregated.agents.includes(agentData.agentName)) {
-                                aggregated.agents.push(agentData.agentName);
-                            }
-                            aggregated.agentCoachMap[agentData.agentName] = coach.email;
-                            if (agentData.entries) {
-                                agentData.entries.forEach(e => {
-                                    e.agent = agentData.agentName;
-                                    const existingIdx = aggregated.entries.findIndex(ae => ae.agent === e.agent && ae.mes === e.mes && ae.semana == e.semana);
-                                    if (existingIdx >= 0) aggregated.entries[existingIdx] = e;
-                                    else aggregated.entries.push(e);
-                                });
-                            }
+                        if (agentData.status === 'inactive') return;
+                        if (!agentData.agentName) return;
+                        const agentId = docSnap.id;
+                        if (!aggregated.agents.includes(agentId)) {
+                            aggregated.agents.push(agentId);
+                        }
+                        aggregated.agentCoachMap[agentId] = coach.email;
+                        aggregated.agentDetails[agentId] = {
+                            agentId,
+                            agentName: agentData.agentName,
+                            email: agentId,
+                            approvedAt: agentData.approvedAt || null,
+                            coachEmail: coach.email
+                        };
+                        if (agentData.entries) {
+                            agentData.entries.forEach(e => {
+                                e.agent = agentData.agentName; // display name (compat)
+                                e.agentId = agentId;            // clave única (nuevo)
+                                const existingIdx = aggregated.entries.findIndex(ae =>
+                                    ae.agentId === e.agentId && ae.mes === e.mes && ae.semana == e.semana
+                                );
+                                if (existingIdx >= 0) aggregated.entries[existingIdx] = e;
+                                else aggregated.entries.push(e);
+                            });
                         }
                     });
 
                     state.entries = aggregated.entries;
                     state.agents = aggregated.agents;
                     state.agentCoachMap = aggregated.agentCoachMap;
+                    state.agentDetails = aggregated.agentDetails;
                     refreshAll();
                 });
                 agentUnsubs.push(unsub);
             });
+        }
+
+        // ─── PENDIENTES (sin actividad reciente) ──────────────────────────────────────
+        // Promotor ve 2 niveles: coach → agente. Filtros disponibles:
+        //   - Coach (todos / coach X)
+        //   - Tier exclusivo con conteo en cada opción del dropdown
+        let pendientesTierFilter = '';
+        let pendientesCoachFilter = '';
+
+        function computeLastActivityMap() {
+            const map = {};
+            (state.entries || []).forEach(e => {
+                const key = e.agentId || e.agent;
+                if (!key) return;
+                const [mesName, yearStr] = e.mes.split(' ');
+                const monthIdx = MONTHS_ES.indexOf(mesName);
+                const year = parseInt(yearStr);
+                const semana = parseInt(e.semana);
+                if (!e.dias) return;
+                e.dias.forEach(d => {
+                    const hasActivity = (d.P + d.E + d.C + d.V + d.S) > 0 || d.prima > 0;
+                    if (!hasActivity) return;
+                    const dayIdx = DAYS.indexOf(d.dia);
+                    const dayOfMonth = (semana - 1) * 7 + dayIdx + 1;
+                    const date = new Date(year, monthIdx, Math.min(dayOfMonth, 28));
+                    if (!map[key] || date > map[key]) map[key] = date;
+                });
+            });
+            return map;
+        }
+
+        function formatDaysSince(dateA, dateB) {
+            const ms = dateB - dateA;
+            const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+            if (days < 1) return 'menos de 1 día';
+            if (days === 1) return '1 día';
+            if (days < 7) return `${days} días`;
+            if (days < 14) return '1 semana';
+            if (days < 30) return `${Math.floor(days / 7)} semanas`;
+            if (days < 60) return '1 mes';
+            return `${Math.floor(days / 30)} meses`;
+        }
+
+        function clasificarPendiente(agentId, lastActivityMap, hoy) {
+            const lastDate = lastActivityMap[agentId] || null;
+            const details = state.agentDetails ? state.agentDetails[agentId] : null;
+            if (!lastDate) {
+                const approvedAt = details?.approvedAt ? new Date(details.approvedAt) : null;
+                if (approvedAt) {
+                    const hoursSinceApproval = (hoy - approvedAt) / (1000 * 60 * 60);
+                    if (hoursSinceApproval < 24) return null;
+                }
+                return {
+                    tier: 0,
+                    label: 'Sin actividad desde que se registró',
+                    icon: '❓', color: '#f59e0b',
+                    secondLine: approvedAt ? `Registrado hace ${formatDaysSince(approvedAt, hoy)}` : null
+                };
+            }
+            const dias = Math.floor((hoy - lastDate) / (1000 * 60 * 60 * 24));
+            if (dias >= 30) return { tier: 5, label: 'Sin actividad desde hace más de 1 mes', icon: '🚨', color: '#ef4444' };
+            if (dias >= 15) return { tier: 4, label: 'Sin actividad desde hace 1 quincena',   icon: '🕐', color: '#f87171' };
+            if (dias >= 7)  return { tier: 3, label: 'Sin actividad desde hace 1 semana',     icon: '⏰', color: '#fb923c' };
+            if (dias >= 3)  return { tier: 2, label: 'Sin actividad desde hace 3 días',       icon: '⏳', color: '#fbbf24' };
+            return null;
+        }
+
+        function getPendientes(hoy = new Date()) {
+            if (!state.agents || !state.agents.length) return [];
+            const lastActivityMap = computeLastActivityMap();
+            const list = [];
+            state.agents.forEach(agentId => {
+                const cls = clasificarPendiente(agentId, lastActivityMap, hoy);
+                if (!cls) return;
+                const details = state.agentDetails?.[agentId];
+                const coachEmail = details?.coachEmail || state.agentCoachMap?.[agentId] || null;
+                const coachName = coachEmail && state.coachesMap?.[coachEmail]?.coachName || null;
+                const name = details?.agentName || agentId;
+                list.push({ agentId, name, coachEmail, coachName, ...cls });
+            });
+            list.sort((a, b) => {
+                if (a.tier === 0 && b.tier !== 0) return 1;
+                if (b.tier === 0 && a.tier !== 0) return -1;
+                return (a.tier - b.tier) || a.name.localeCompare(b.name);
+            });
+            return list;
+        }
+
+        function applyPendientesFilters(list) {
+            return list.filter(p => {
+                if (pendientesCoachFilter && p.coachEmail !== pendientesCoachFilter) return false;
+                if (pendientesTierFilter !== '' && String(p.tier) !== pendientesTierFilter) return false;
+                return true;
+            });
+        }
+
+        window.setPendientesFilter = function (tier) {
+            pendientesTierFilter = tier === '' ? '' : String(tier);
+            renderLeaderboard();
+        };
+        window.setPendientesCoachFilter = function (email) {
+            pendientesCoachFilter = email || '';
+            renderLeaderboard();
+        };
+
+        let lbActiveSubview = 'equipo';
+        window.switchLbSubview = function (name) {
+            lbActiveSubview = (name === 'pendientes') ? 'pendientes' : 'equipo';
+            document.querySelectorAll('.lb-subtab-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.subview === lbActiveSubview);
+            });
+            document.body.classList.toggle('lb-subview-pendientes', lbActiveSubview === 'pendientes');
+        };
+
+        function renderPendientesSection() {
+            const section = document.getElementById('lb-mobile-pendientes');
+            if (!section) return;
+            const allPendientes = getPendientes();
+            const filtered = applyPendientesFilters(allPendientes);
+
+            const countLabel = allPendientes.length > 99 ? '99+' : String(allPendientes.length);
+            ['lb-subtab-pendientes-badge', 'equipo-pendientes-badge'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (allPendientes.length > 0) { el.style.display = 'inline-flex'; el.textContent = countLabel; }
+                else el.style.display = 'none';
+            });
+
+            if (allPendientes.length === 0) {
+                section.innerHTML = `
+                    <div class="lb-pendientes-section">
+                        <div class="lb-mobile-empty" style="padding:40px 16px;">
+                            <i class="fa fa-check-circle" style="font-size:32px;color:var(--green);margin-bottom:12px;display:block;opacity:0.6;"></i>
+                            Sin pendientes — todos los agentes están reportando al día.
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const coachesConPendientes = new Set(allPendientes.map(p => p.coachEmail).filter(Boolean));
+            const coachOpts = '<option value="">Todos los coaches</option>' +
+                state.coaches
+                    .filter(c => c.status !== 'inactive' && coachesConPendientes.has(c.email))
+                    .sort((a, b) => (a.coachName || '').localeCompare(b.coachName || ''))
+                    .map(c => `<option value="${escapeHtml(c.email)}" ${pendientesCoachFilter === c.email ? 'selected' : ''}>${escapeHtml(c.coachName || c.email)}</option>`)
+                    .join('');
+
+            const tierCounts = { 0: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+            allPendientes.forEach(p => { if (tierCounts[p.tier] !== undefined) tierCounts[p.tier]++; });
+            const filterOpts = [
+                { val: '',  label: 'Todos los pendientes',           count: allPendientes.length, alwaysShow: true },
+                { val: '2', label: '⏳ Hace 3 días',                   count: tierCounts[2] },
+                { val: '3', label: '⏰ Hace 1 semana',                count: tierCounts[3] },
+                { val: '4', label: '🕐 Hace 1 quincena',              count: tierCounts[4] },
+                { val: '5', label: '🚨 Hace más de 1 mes',            count: tierCounts[5] },
+                { val: '0', label: '❓ Nunca reportó',                count: tierCounts[0] }
+            ].filter(o => o.alwaysShow || o.count > 0)
+             .map(o => `<option value="${o.val}" ${pendientesTierFilter === o.val ? 'selected' : ''}>${o.label} (${o.count})</option>`)
+             .join('');
+
+            const cardsHtml = filtered.length === 0
+                ? `<div class="lb-mobile-empty" style="padding:24px 16px;font-size:13px;">Sin pendientes con los filtros actuales.</div>`
+                : filtered.map(p => {
+                    const tierClass = `tier-${p.tier}`;
+                    const secondLine = p.secondLine ? `<div class="lb-ghost-second-line">${escapeHtml(p.secondLine)}</div>` : '';
+                    const coachLine = p.coachName
+                        ? `<div class="lb-ghost-coach">Coach: ${escapeHtml(p.coachName)}</div>`
+                        : '';
+                    return `
+                        <div class="lb-ghost-card ${tierClass}">
+                            <div class="lb-ghost-icon">${p.icon}</div>
+                            <div class="lb-ghost-body">
+                                <div class="lb-ghost-name">${escapeHtml(p.name)}</div>
+                                <div class="lb-ghost-tier-label" style="color:${p.color};">${escapeHtml(p.label)}</div>
+                                ${secondLine}
+                                ${coachLine}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            const countDisplay = filtered.length === allPendientes.length
+                ? String(allPendientes.length)
+                : `${filtered.length} / ${allPendientes.length}`;
+
+            section.innerHTML = `
+                <div class="lb-pendientes-section">
+                    <div class="lb-pendientes-header">
+                        <div class="lb-pendientes-title">
+                            <i class="fa fa-ghost"></i> Pendientes
+                            <span class="count">${countDisplay}</span>
+                        </div>
+                        <div class="lb-pendientes-filters">
+                            <select class="lb-pendientes-filter" onchange="setPendientesCoachFilter(this.value)">
+                                ${coachOpts}
+                            </select>
+                            <select class="lb-pendientes-filter" onchange="setPendientesFilter(this.value)">
+                                ${filterOpts}
+                            </select>
+                        </div>
+                    </div>
+                    ${cardsHtml}
+                </div>
+            `;
         }
 
         // ─── INIT ─────────────────────────────────────────────────────────────────────
@@ -2612,8 +2929,10 @@
         // ─── BITÁCORA VIEW (solo lectura) ─────────────────────────────────────────────
         let bitCurrentWeeks = [];
 
+        // state.agents = array de IDs (doc.id). Display name via agentDetails[id].agentName.
         function getBitAgentList() { return state.agents; }
-        function getBitAgentCoach(name) { return state.agentCoachMap[name]; }
+        function getBitAgentCoach(agentId) { return state.agentCoachMap[agentId]; }
+        function getBitAgentName(agentId) { return state.agentDetails?.[agentId]?.agentName || agentId; }
 
         function refreshBitCoachFilter() {
             const sel = document.getElementById('bit-coach-filter');
@@ -2629,12 +2948,16 @@
             const coachF = document.getElementById('bit-coach-filter').value;
             const sel = document.getElementById('bit-agent');
             const prev = sel.value;
-            const agents = coachF
-                ? getBitAgentList().filter(a => getBitAgentCoach(a) === coachF)
+            const agentIds = coachF
+                ? getBitAgentList().filter(id => getBitAgentCoach(id) === coachF)
                 : getBitAgentList();
             sel.innerHTML = '<option value="">— Selecciona agente —</option>' +
-                agents.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join('');
-            sel.value = agents.includes(prev) ? prev : '';
+                agentIds
+                    .slice()
+                    .sort((a, b) => getBitAgentName(a).localeCompare(getBitAgentName(b)))
+                    .map(id => `<option value="${escapeHtml(id)}">${escapeHtml(getBitAgentName(id))}</option>`)
+                    .join('');
+            sel.value = agentIds.includes(prev) ? prev : '';
             autoLoadBit();
         };
 
@@ -2654,7 +2977,7 @@
         };
 
         window.autoLoadBit = function () {
-            const agent = document.getElementById('bit-agent').value;
+            const agentId = document.getElementById('bit-agent').value;
             const semana = document.getElementById('bit-semana').value;
             const month = parseInt(document.getElementById('bit-month').value);
             const year = parseInt(document.getElementById('bit-year').value);
@@ -2662,21 +2985,21 @@
             const mes = MONTHS_ES[month - 1] + ' ' + year;
             const semIdx = parseInt(semana) - 1;
             const weekDays = bitCurrentWeeks[semIdx] || [];
-            buildBitWeekTable(weekDays, agent, mes, semana);
+            buildBitWeekTable(weekDays, agentId, mes, semana);
             const info = document.getElementById('bit-week-info');
-            if (weekDays.length && agent) {
+            if (weekDays.length && agentId) {
                 info.textContent = `📅 ${mes} · Semana ${semana} de ${bitCurrentWeeks.length} · Días: ${weekDays.map(d => d.dayName + ' ' + d.date).join(', ')}`;
             } else { info.textContent = ''; }
-            updateBitMonthTotals(agent, mes);
+            updateBitMonthTotals(agentId, mes);
         };
 
-        function buildBitWeekTable(weekDays, agent, mes, semana) {
+        function buildBitWeekTable(weekDays, agentId, mes, semana) {
             const tbody = document.getElementById('bit-week-body');
-            if (!weekDays.length || !agent) {
-                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--slate);padding:20px;">${agent ? '' : 'Selecciona un agente para ver su bitácora.'}</td></tr>`;
+            if (!weekDays.length || !agentId) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--slate);padding:20px;">${agentId ? '' : 'Selecciona un agente para ver su bitácora.'}</td></tr>`;
                 resetBitTotals(); return;
             }
-            const entry = state.entries.find(e => e.agent === agent && e.mes === mes && e.semana == semana);
+            const entry = state.entries.find(e => (e.agentId || e.agent) === agentId && e.mes === mes && e.semana == semana);
             const diasMap = {};
             if (entry) entry.dias.forEach(d => { diasMap[d.dia] = d; });
             let semP = 0, semE = 0, semC = 0, semV = 0, semS = 0, semPrima = 0;
@@ -2702,9 +3025,9 @@
             document.getElementById('bit-tt-$').textContent = '$' + semPrima.toFixed(0);
         }
 
-        function updateBitMonthTotals(agent, mes) {
-            if (!agent) { resetBitMonthTotals(); return; }
-            const monthEntries = state.entries.filter(e => e.agent === agent && e.mes === mes);
+        function updateBitMonthTotals(agentId, mes) {
+            if (!agentId) { resetBitMonthTotals(); return; }
+            const monthEntries = state.entries.filter(e => (e.agentId || e.agent) === agentId && e.mes === mes);
             let mP = 0, mE = 0, mC = 0, mV = 0, mS = 0, mPrima = 0;
             monthEntries.forEach(e => {
                 if (e.totales) { mP += e.totales.P || 0; mE += e.totales.E || 0; mC += e.totales.C || 0; mV += e.totales.V || 0; mS += e.totales.S || 0; mPrima += parseFloat(e.totales.prima) || 0; }
@@ -2730,12 +3053,12 @@
 
         window.renderBitHistory = function () {
             const grid = document.getElementById('bit-history-grid');
-            if (!grid) return; // modal de log eliminado, no hay grid que poblar
+            if (!grid) return;
             const coachF = document.getElementById('bit-coach-filter').value;
-            const agentF = document.getElementById('bit-agent').value;
+            const agentF = document.getElementById('bit-agent').value; // agentId
             let filtered = state.entries;
-            if (coachF) filtered = filtered.filter(e => getBitAgentCoach(e.agent) === coachF);
-            if (agentF) filtered = filtered.filter(e => e.agent === agentF);
+            if (coachF) filtered = filtered.filter(e => getBitAgentCoach(e.agentId || e.agent) === coachF);
+            if (agentF) filtered = filtered.filter(e => (e.agentId || e.agent) === agentF);
             if (!filtered.length) {
                 grid.innerHTML = '<div class="empty-state"><i class="fa fa-inbox"></i> No hay entradas.</div>';
                 return;
@@ -2753,7 +3076,8 @@
         window.loadBitEntry = function (i) {
             const e = state.entries[i];
             if (!e) return;
-            document.getElementById('bit-agent').value = e.agent;
+            // bit-agent value es agentId (no nombre)
+            document.getElementById('bit-agent').value = e.agentId || e.agent;
             const parts = e.mes.split(' ');
             const mIdx = MONTHS_ES.indexOf(parts[0]);
             if (mIdx >= 0) {
@@ -2853,20 +3177,20 @@
         function refreshChartAgents() {
             const chartCoachEl = document.getElementById('chart-coach-sel');
             const selectedCoach = chartCoachEl ? chartCoachEl.value : '';
-            let agentsForCoach = state.agents;
+            let agentIds = state.agents; // array de IDs
             if (selectedCoach) {
-                agentsForCoach = state.agents.filter(a => state.agentCoachMap[a] === selectedCoach);
+                agentIds = state.agents.filter(id => state.agentCoachMap[id] === selectedCoach);
             }
-            const opts = agentsForCoach
+            const nameOf = id => state.agentDetails?.[id]?.agentName || id;
+            const opts = agentIds
                 .slice()
-                .sort((a, b) => a.localeCompare(b))
-                .map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join('');
+                .sort((a, b) => nameOf(a).localeCompare(nameOf(b)))
+                .map(id => `<option value="${escapeHtml(id)}">${escapeHtml(nameOf(id))}</option>`).join('');
             const el = document.getElementById('chart-agent-sel');
             if (!el) return;
             const cur = el.value;
             el.innerHTML = '<option value="__all__">Todos (Total equipo)</option>' + opts;
-            // Preserve selection if still valid
-            if (cur === '__all__' || agentsForCoach.includes(cur)) el.value = cur;
+            if (cur === '__all__' || agentIds.includes(cur)) el.value = cur;
             else el.value = '__all__';
         }
 
@@ -3054,32 +3378,32 @@
             const mesF = document.getElementById('lb-mes-filter').value;
             const semF = document.getElementById('lb-sem-filter').value;
             const coachF = document.getElementById('lb-coach-filter') ? document.getElementById('lb-coach-filter').value : '';
-            let filtered = state.entries.filter(e =>
-                (!mesF || e.mes === mesF) &&
-                (!semF || e.semana == semF) &&
-                (!coachF || state.agentCoachMap[e.agent] === coachF)
-            );
+            let filtered = state.entries.filter(e => {
+                const key = e.agentId || e.agent;
+                return (!mesF || e.mes === mesF) &&
+                       (!semF || e.semana == semF) &&
+                       (!coachF || state.agentCoachMap[key] === coachF);
+            });
 
-            // aggregate per agent (re-summing only valid days + tracking red activity)
-            // ALSO build agMapMobile that sums ALL days (valid + invalid) sin distinción
-            // — usado por el mobile leaderboard para "simplificar".
+            // Aggregate por agentId (clave única). El display name se guarda en value.name.
+            // Fixea bug de homónimos: dos agentes con mismo nombre ahora se cuentan separados.
             const agMap = {};
             const agMapMobile = {};
             filtered.forEach(e => {
-                if (!agMap[e.agent]) agMap[e.agent] = { P: 0, E: 0, C: 0, V: 0, S: 0, prima: 0, redS: 0, redPrima: 0 };
-                if (!agMapMobile[e.agent]) agMapMobile[e.agent] = { P: 0, E: 0, C: 0, V: 0, S: 0, prima: 0 };
+                const id = e.agentId || e.agent;
+                const name = e.agent || id;
+                if (!agMap[id]) agMap[id] = { name, P: 0, E: 0, C: 0, V: 0, S: 0, prima: 0, redS: 0, redPrima: 0 };
+                if (!agMapMobile[id]) agMapMobile[id] = { name, P: 0, E: 0, C: 0, V: 0, S: 0, prima: 0 };
                 e.dias.forEach(d => {
-                    // Mobile aggregation: sumar todo sin filtrar
-                    COLS.forEach(c => agMapMobile[e.agent][c] += d[c]);
-                    agMapMobile[e.agent].prima += d.prima;
-                    // Desktop aggregation: filtrar por validateDay (valid vs red)
+                    COLS.forEach(c => agMapMobile[id][c] += d[c]);
+                    agMapMobile[id].prima += d.prima;
                     const { ok } = validateDay(d);
                     if (ok) {
-                        COLS.forEach(c => agMap[e.agent][c] += d[c]);
-                        agMap[e.agent].prima += d.prima;
+                        COLS.forEach(c => agMap[id][c] += d[c]);
+                        agMap[id].prima += d.prima;
                     } else {
-                        agMap[e.agent].redS += d.S;
-                        agMap[e.agent].redPrima += d.prima;
+                        agMap[id].redS += d.S;
+                        agMap[id].redPrima += d.prima;
                     }
                 });
             });
@@ -3134,12 +3458,13 @@
 
             tbody.innerHTML = agents.map((ag, i) => {
                 const d = agMap[ag];
+                const displayName = d.name || ag;
                 const primaFmt = d.prima.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 const redPrimaFmt = d.redPrima.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
                 const totalPrimaFmt = (d.prima + d.redPrima).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 return `<tr>
                     <td class="rank-num">${i + 1}</td>
-                    <td class="agent-name-cell">${escapeHtml(ag)}</td>
+                    <td class="agent-name-cell">${escapeHtml(displayName)}</td>
                     <td style="border-left:2px solid #475569">${d.P}</td><td>${d.E}</td><td>${d.C}</td><td>${d.V}</td><td>${d.S}</td>
                     <td class="ratio-cell" style="border-left:2px solid #475569">${ratioPct(d.E, d.P)}</td>
                     <td class="ratio-cell">${ratioPct(d.C, d.E)}</td>
@@ -3195,6 +3520,8 @@
             const rowsEl = document.getElementById('lb-mobile-rows');
             if (!totalEl || !rowsEl) return;
 
+            try { renderPendientesSection(); } catch (e) {}
+
             const agents = Object.keys(agMap);
             if (!agents.length) {
                 totalEl.innerHTML = '';
@@ -3241,6 +3568,7 @@
 
             rowsEl.innerHTML = agents.map((ag, i) => {
                 const d = agMap[ag];
+                const displayName = d.name || ag;
                 const primaFmt = d.prima.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 const ef = d.P > 0 ? ((d.V / d.P) * 100).toFixed(1) + '%' : '—';
                 const dpv = d.V > 0 ? '$' + (d.prima / d.V).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
@@ -3248,7 +3576,7 @@
                     <div class="lb-mobile-row" onclick="toggleLbMobileRow(this)">
                         <div class="lb-mobile-row-header">
                             <div class="lb-rank">#${i + 1}</div>
-                            <div class="lb-name">${escapeHtml(ag)}</div>
+                            <div class="lb-name">${escapeHtml(displayName)}</div>
                             <div class="lb-chevron"><i class="fa fa-chevron-down"></i></div>
                         </div>
                         <div class="lb-mobile-row-stats">
@@ -3288,7 +3616,7 @@
 
             // Apply coach filter first
             const baseEntries = coachF
-                ? state.entries.filter(e => state.agentCoachMap[e.agent] === coachF)
+                ? state.entries.filter(e => state.agentCoachMap[e.agentId || e.agent] === coachF)
                 : state.entries;
 
             // Find the latest month in the data
@@ -3339,7 +3667,8 @@
                 }
             }
 
-            entries = filtered.filter(e => agSel === '__all__' || e.agent === agSel);
+            // chart-agent-sel.value is agentId (or '__all__'). Compare by unique id.
+            entries = filtered.filter(e => agSel === '__all__' || (e.agentId || e.agent) === agSel);
 
             // Build x-axis labels: unique "mes · SemN" sorted by date
             const labelSet = [...new Set(entries.map(e => `${e.mes}·S${e.semana}`))].sort((a, b) => {
@@ -3468,7 +3797,7 @@
 
             // Apply coach filter first
             const baseEntries = coachF
-                ? state.entries.filter(e => state.agentCoachMap[e.agent] === coachF)
+                ? state.entries.filter(e => state.agentCoachMap[e.agentId || e.agent] === coachF)
                 : state.entries;
 
             // Find the latest month in the data
@@ -3522,17 +3851,20 @@
                 }
             }
 
+            // Keyed por agentId (clave única). Labels usan display name desde agMap[id].name.
             const agMap = {};
             entries.forEach(e => {
-                if (!agMap[e.agent]) agMap[e.agent] = { P: 0, E: 0, C: 0, V: 0, S: 0, prima: 0 };
-                COLS.forEach(c => agMap[e.agent][c] += e.totales[c]);
-                agMap[e.agent].prima += e.totales.prima;
+                const id = e.agentId || e.agent;
+                const name = e.agent || id;
+                if (!agMap[id]) agMap[id] = { name, P: 0, E: 0, C: 0, V: 0, S: 0, prima: 0 };
+                COLS.forEach(c => agMap[id][c] += e.totales[c]);
+                agMap[id].prima += e.totales.prima;
             });
 
-            const agents = Object.keys(agMap);
+            const agents = Object.keys(agMap); // agentIds
             agents.sort((a, b) => agMap[b].prima - agMap[a].prima);
 
-            const labels = agents;
+            const labels = agents.map(id => agMap[id].name);
             const primas = agents.map(a => agMap[a].prima);
             const Vs = agents.map(a => agMap[a].V);
             const Ps = agents.map(a => agMap[a].P);
